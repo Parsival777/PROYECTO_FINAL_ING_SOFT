@@ -27,3 +27,11 @@ jobs:
 
     - name: Ejecutar Pruebas Unitarias
       run: npm test
+
+    - name: Instalar dependencias
+      run: npm install
+
+    - name: Ejecutar Pruebas Unitarias
+      run: |
+        chmod +x ./node_modules/.bin/jest
+        npm test
