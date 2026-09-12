@@ -1,0 +1,29 @@
+name: Galaga API CI/CD
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  test-and-build:
+    runs-on: ubuntu-latest
+    
+    # Le decimos a GitHub que trabaje dentro de la carpeta de la API
+    defaults:
+      run:
+        working-directory: ./api_server
+
+    steps:
+    - name: Clonar el repositorio
+      uses: actions/checkout@v3
+
+    - name: Instalar Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18.x'
+
+    - name: Instalar dependencias
+      run: npm install
+
+    - name: Ejecutar Pruebas Unitarias
+      run: npm test

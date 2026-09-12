@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<coverage generated="1789241983422" clover="3.2.0">
+  <project timestamp="1789241983422" name="All files">
+    <metrics statements="35" coveredstatements="31" conditionals="12" coveredconditionals="9" methods="4" coveredmethods="3" elements="51" coveredelements="43" complexity="0" loc="35" ncloc="35" packages="1" files="1" classes="1"/>
+    <file name="server.js" path="C:\Users\PC\OneDrive\Desktop\galaga_project\api_server\server.js">
+      <metrics statements="35" coveredstatements="31" conditionals="12" coveredconditionals="9" methods="4" coveredmethods="3"/>
+      <line num="1" count="1" type="stmt"/>
+      <line num="2" count="1" type="stmt"/>
+      <line num="3" count="1" type="stmt"/>
+      <line num="4" count="1" type="stmt"/>
+      <line num="6" count="1" type="stmt"/>
+      <line num="7" count="1" type="stmt"/>
+      <line num="8" count="1" type="stmt"/>
+      <line num="11" count="1" type="stmt"/>
+      <line num="14" count="1" type="stmt"/>
+      <line num="17" count="1" type="stmt"/>
+      <line num="18" count="2" type="stmt"/>
+      <line num="20" count="2" type="cond" truecount="4" falsecount="0"/>
+      <line num="21" count="1" type="stmt"/>
+      <line num="25" count="1" type="stmt"/>
+      <line num="26" count="1" type="stmt"/>
+      <line num="29" count="1" type="cond" truecount="1" falsecount="1"/>
+      <line num="31" count="1" type="stmt"/>
+      <line num="39" count="1" type="stmt"/>
+      <line num="40" count="1" type="stmt"/>
+      <line num="44" count="1" type="stmt"/>
+      <line num="45" count="2" type="stmt"/>
+      <line num="47" count="2" type="stmt"/>
+      <line num="48" count="2" type="cond" truecount="1" falsecount="1"/>
+      <line num="49" count="0" type="stmt"/>
+      <line num="53" count="2" type="stmt"/>
+      <line num="54" count="2" type="cond" truecount="2" falsecount="0"/>
+      <line num="55" count="1" type="stmt"/>
+      <line num="59" count="1" type="stmt"/>
+      <line num="65" count="1" type="stmt"/>
+      <line num="69" count="1" type="stmt"/>
+      <line num="70" count="1" type="cond" truecount="1" falsecount="1"/>
+      <line num="71" count="0" type="stmt"/>
+      <line num="72" count="0" type="stmt"/>
+      <line num="73" count="0" type="stmt"/>
+      <line num="77" count="1" type="stmt"/>
+    </file>
+  </project>
+</coverage>
