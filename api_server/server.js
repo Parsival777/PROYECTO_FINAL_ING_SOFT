@@ -13,6 +13,11 @@ const JWT_SECRET = "galaga_super_secret_key_123";
 // Base de datos simulada en memoria (después la conectare a MySQL)
 const usersDB = [];
 
+// Ruta de estado para verificar que el servidor está activo
+app.get('/', (req, res) => {
+    res.status(200).json({ status: "ok", message: "API de Galaga operativa" });
+});
+
 // 1. Endpoint para Registrar Usuarios
 app.post('/api/register', async (req, res) => {
     const { username, password, role } = req.body;
