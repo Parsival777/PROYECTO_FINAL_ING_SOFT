@@ -17,10 +17,10 @@ app.get('/', (req, res) => {
 });
 
 // Registro con persistencia en MySQL
-app.post('/register', async (req, res) => {
+app.post('/api/register', async (req, res) => {
     const { username, password } = req.body;
     if (!username || !password) {
-        return res.status(400).json({ error: "Faltan credenciales requeridas" });
+        return res.status(400).json({ error: "Faltan datos" });
     }
 
     try {
@@ -33,20 +33,20 @@ app.post('/register', async (req, res) => {
         await db.query('INSERT INTO users (username, password, role) VALUES (?, ?, ?)', [
             username,
             hashedPassword,
-            'player'
+            'usuario'
         ]);
 
-        return res.status(201).json({ message: "Usuario registrado con éxito", role: "player" });
+        return res.status(201).json({ message: "Usuario registrado con éxito", role: "usuario" });
     } catch (err) {
         return res.status(500).json({ error: "Error en base de datos", details: err.message });
     }
 });
 
 // Login con validación contra MySQL
-app.post('/login', async (req, res) => {
+app.post('/api/login', async (req, res) => {
     const { username, password } = req.body;
     if (!username || !password) {
-        return res.status(400).json({ error: "Faltan credenciales requeridas" });
+        return res.status(400).json({ error: "Faltan datos" });
     }
 
     try {
