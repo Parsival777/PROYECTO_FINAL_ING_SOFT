@@ -1,83 +1,91 @@
-const express = require('express');
-const cors = require('cors');
+const request = require('supertest');
 const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
+const app = require('./server');
 const db = require('./config/db');
-require('dotenv').config();
 
-const app = express();
-app.use(express.json());
-app.use(cors());
+// 1. Secuestramos el módulo de base de datos
+jest.mock('./config/db');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'galaga_secret_key_2026';
-
-// Ruta de estado para escaneos y monitoreo
-app.get('/', (req, res) => {
-    res.status(200).json({ status: "ok", message: "API de Galaga operativa" });
-});
-
-// Registro con persistencia en MySQL
-app.post('/api/register', async (req, res) => {
-    const { username, password } = req.body;
-    if (!username || !password) {
-        return res.status(400).json({ error: "Faltan datos" });
-    }
-
-    try {
-        const [existing] = await db.query('SELECT * FROM users WHERE username = ?', [username]);
-        if (existing.length > 0) {
-            return res.status(409).json({ error: "El usuario ya existe" });
-        }
-
-        const hashedPassword = await bcrypt.hash(password, 10);
-        await db.query('INSERT INTO users (username, password, role) VALUES (?, ?, ?)', [
-            username,
-            hashedPassword,
-            'usuario'
-        ]);
-
-        return res.status(201).json({ message: "Usuario registrado con éxito", role: "usuario" });
-    } catch (err) {
-        return res.status(500).json({ error: "Error en base de datos", details: err.message });
-    }
-});
-
-// Login con validación contra MySQL
-app.post('/api/login', async (req, res) => {
-    const { username, password } = req.body;
-    if (!username || !password) {
-        return res.status(400).json({ error: "Faltan datos" });
-    }
-
-    try {
-        const [rows] = await db.query('SELECT * FROM users WHERE username = ?', [username]);
-        if (rows.length === 0) {
-            return res.status(401).json({ error: "Credenciales inválidas" });
-        }
-
-        const user = rows[0];
-        const isValid = await bcrypt.compare(password, user.password);
-        if (!isValid) {
-            return res.status(401).json({ error: "Credenciales inválidas" });
-        }
-
-        const token = jwt.sign(
-            { id: user.id, username: user.username, role: user.role },
-            JWT_SECRET,
-            { expiresIn: '2h' }
-        );
-
-        return res.status(200).json({ message: "Login exitoso", token, role: user.role });
-    } catch (err) {
-        return res.status(500).json({ error: "Error en base de datos", details: err.message });
-    }
-});
-
-if (process.env.NODE_ENV !== 'test') {
-    const PORT = process.env.PORT || 3000;
-    app.listen(PORT, () => {
-        console.log(`Servidor API de Galaga corriendo en http://localhost:${PORT}`);
+describe('Pruebas del Módulo de Autenticación (Galaga API)', () => {
+    
+    // Limpiamos la simulación antes de cada prueba
+    beforeEach(() => {
+        jest.clearAllMocks();
     });
-}
 
-module.exports = app;
+    // Prueba 1: Registro exitoso
+    it('Debe registrar un nuevo usuario y asignar rol', async () => {
+        // Simulamos que el SELECT devuelve un array vacío (el usuario no existe)
+        db.query.mockResolvedValueOnce([[]]);
+        // Simulamos que el INSERT es exitoso
+        db.query.mockResolvedValueOnce([{ insertId: 1 }]);
+
+        const res = await request(app)
+            .post('/api/register')
+            .send({
+                username: 'jugador1',
+                password: 'password123'
+            });
+        
+        expect(res.statusCode).toEqual(201);
+        expect(res.body).toHaveProperty('message', 'Usuario registrado con éxito');
+        expect(res.body).toHaveProperty('role', 'usuario');
+    });
+
+    // Prueba 2: Faltan datos en el registro
+    it('Debe devolver error 400 si faltan datos en el registro', async () => {
+        const res = await request(app)
+            .post('/api/register')
+            .send({ username: 'jugador2' }); 
+        
+        expect(res.statusCode).toEqual(400);
+        expect(res.body).toHaveProperty('error', 'Faltan datos');
+    });
+
+    // Prueba 3: Login exitoso y generación de JWT
+    it('Debe iniciar sesión correctamente y devolver un token JWT', async () => {
+        // Creamos una contraseña encriptada real para que bcrypt.compare pase
+        const fakeHashedPassword = await bcrypt.hash('password123', 10);
+        
+        // Simulamos que la DB encuentra al usuario
+        db.query.mockResolvedValueOnce([[{ 
+            id: 1, 
+            username: 'jugador1', 
+            password: fakeHashedPassword, 
+            role: 'usuario' 
+        }]]);
+
+        const res = await request(app)
+            .post('/api/login')
+            .send({
+                username: 'jugador1',
+                password: 'password123'
+            });
+        
+        expect(res.statusCode).toEqual(200);
+        expect(res.body).toHaveProperty('token');
+    });
+
+    // Prueba 4: Login con contraseña incorrecta
+    it('Debe devolver error 401 si la contraseña es incorrecta', async () => {
+        const fakeHashedPassword = await bcrypt.hash('password123', 10);
+        
+        // Simulamos que la DB encuentra al usuario, pero mandaremos un password erróneo en el request
+        db.query.mockResolvedValueOnce([[{ 
+            id: 1, 
+            username: 'jugador1', 
+            password: fakeHashedPassword, 
+            role: 'usuario' 
+        }]]);
+
+        const res = await request(app)
+            .post('/api/login')
+            .send({
+                username: 'jugador1',
+                password: 'wrongpassword'
+            });
+        
+        expect(res.statusCode).toEqual(401);
+        expect(res.body).toHaveProperty('error', 'Credenciales inválidas');
+    });
+});
