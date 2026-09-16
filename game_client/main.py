@@ -1,6 +1,7 @@
 import pygame
 import sys
 import random
+import auth
 
 # --- Configuración Básica ---
 WIDTH, HEIGHT = 800, 600
@@ -8,12 +9,13 @@ FPS = 60
 
 # --- Colores ---
 BLACK = (0, 0, 0)
-WHITE = (255, 255, 255) # <-- Nuevo color para el texto
+WHITE = (255, 255, 255)
 GREEN = (0, 255, 0)
 YELLOW = (255, 255, 0)
 RED = (255, 0, 0)
 
-pygame.init() # Inicializamos Pygame desde el principio para cargar fuentes
+# Inicializamos Pygame para poder cargar la fuente de texto
+pygame.init()
 font_name = pygame.font.match_font('arial')
 
 # --- Función para dibujar texto en pantalla ---
@@ -104,6 +106,24 @@ class Enemy(pygame.sprite.Sprite):
 
 # --- Función Principal ---
 def main():
+    # --- SISTEMA DE AUTENTICACIÓN (CLI) ---
+    print("\n" + "="*40)
+    print("🛸 BIENVENIDO A GALAGA - TERMINAL DE ACCESO 🛸")
+    print("="*40)
+    username = input("👤 Ingresa tu usuario: ")
+    password = input("🔑 Ingresa tu contraseña: ")
+    
+    # Llamamos a la API usando la función de tu archivo auth.py
+    token = auth.login(username, password)
+    
+    if not token:
+        print("❌ Acceso denegado. Credenciales incorrectas o API apagada.")
+        print("Cerrando el sistema...")
+        sys.exit()
+        
+    print("✅ Acceso concedido. Inicializando motor gráfico...\n")
+    # --------------------------------------
+
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
     pygame.display.set_caption("Galaga - Proyecto Final Ingeniería de Software")
     clock = pygame.time.Clock()
@@ -120,9 +140,8 @@ def main():
         all_sprites.add(enemy)
         enemies.add(enemy)
 
-    score = 0 # <-- Variable de puntuación
+    score = 0
 
-    # --- GAME LOOP ---
     running = True
     while running:
         for event in pygame.event.get():
@@ -131,31 +150,28 @@ def main():
 
         all_sprites.update()
 
-        # 1. Colisión: Bala vs Enemigo
+        # Colisión: Bala vs Enemigo
         hits = pygame.sprite.groupcollide(enemies, bullets, True, True)
         for hit in hits:
-            score += 10 # Sumar 10 puntos por cada acierto
+            score += 10
             new_enemy = Enemy()
             all_sprites.add(new_enemy)
             enemies.add(new_enemy)
 
-        # 2. Colisión: Enemigo vs Jugador (GAME OVER)
-        # spritecollide revisa si el rectángulo del jugador toca algún rectángulo del grupo enemies
+        # Colisión: Enemigo vs Jugador (GAME OVER)
         player_hit = pygame.sprite.spritecollide(player, enemies, False)
         if player_hit:
-            running = False # Rompe el ciclo y cierra el juego
+            running = False 
 
-        # Renderizar gráficos
         screen.fill(BLACK)
         all_sprites.draw(screen)
         
-        # Dibujar el marcador en la parte superior central
-        draw_text(screen, str(score), 30, WIDTH // 2, 10)
+        draw_text(screen, f"Puntos: {score}", 30, WIDTH // 2, 10)
         
         pygame.display.flip()
         clock.tick(FPS)
 
-    print(f"Juego Terminado. Puntuación Final: {score}")
+    print(f"\n💥 FIN DEL JUEGO. Puntuación Final: {score} 💥")
     pygame.quit()
     sys.exit()
 
