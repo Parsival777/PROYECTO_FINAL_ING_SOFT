@@ -1,56 +1,59 @@
-import requests
+import aiohttp
+import asyncio
 
-REGISTER_URL = "http://localhost:3000/api/register"
-LOGIN_URL = "http://localhost:3000/api/login"
-SCORE_URL = "http://localhost:3000/api/score"
-LEADERBOARD_URL = "http://localhost:3000/api/leaderboard"
+# Por ahora usamos localhost. Cuando subamos tu API a Render, solo cambiaremos esta URL.
+URL_BASE = "http://localhost:3000/api"
 
-def login(username, password):
+REGISTER_URL = f"{URL_BASE}/register"
+LOGIN_URL = f"{URL_BASE}/login"
+SCORE_URL = f"{URL_BASE}/score"
+LEADERBOARD_URL = f"{URL_BASE}/leaderboard"
+
+async def login(username, password):
     try:
-        response = requests.post(LOGIN_URL, json={"username": username, "password": password})
-        if response.status_code == 200:
-            data = response.json()
-            return data.get('token')
-        else:
-            print(f"Error al iniciar sesión: {response.json().get('error')}")
-            return None
-    except requests.exceptions.ConnectionError:
-        print("❌ Error: No se pudo conectar al servidor. ¿Está encendido el api_server?")
-        return None
+        async with aiohttp.ClientSession() as session:
+            async with session.post(LOGIN_URL, json={"username": username, "password": password}) as response:
+                if response.status == 200:
+                    data = await response.json()
+                    return data.get('token')
+                else:
+                    error_data = await response.json()
+                    print(f"Error al iniciar sesión: {error_data.get('error')}")
+                    return None
     except Exception as e:
-        print(f"❌ Error inesperado: {e}")
+        print(f"❌ Error de conexión: {e}")
         return None
 
-def register(username, password):
+async def register(username, password):
     try:
-        response = requests.post(REGISTER_URL, json={"username": username, "password": password})
-        if response.status_code == 201:
-            print("✅ Usuario registrado exitosamente.")
-            return True
-        else:
-            print(f"Error al registrar: {response.json().get('error')}")
-            return False
-    except requests.exceptions.ConnectionError:
-        print("❌ Error: No se pudo conectar al servidor. ¿Está encendido el api_server?")
-        return False
+        async with aiohttp.ClientSession() as session:
+            async with session.post(REGISTER_URL, json={"username": username, "password": password}) as response:
+                if response.status == 201:
+                    print("✅ Usuario registrado exitosamente.")
+                    return True
+                else:
+                    error_data = await response.json()
+                    print(f"Error al registrar: {error_data.get('error')}")
+                    return False
     except Exception as e:
-        print(f"❌ Error inesperado: {e}")
+        print(f"❌ Error de conexión: {e}")
         return False
 
-def save_score(token, score):
+async def save_score(token, score):
     try:
-        # Enviamos el token en los headers para que el middleware del backend nos deje pasar
         headers = {"Authorization": f"Bearer {token}"}
-        response = requests.post(SCORE_URL, json={"score": score}, headers=headers)
-        return response.status_code == 201
+        async with aiohttp.ClientSession() as session:
+            async with session.post(SCORE_URL, json={"score": score}, headers=headers) as response:
+                return response.status == 201
     except:
         return False
 
-def get_leaderboard():
+async def get_leaderboard():
     try:
-        response = requests.get(LEADERBOARD_URL)
-        if response.status_code == 200:
-            return response.json()
-        return []
+        async with aiohttp.ClientSession() as session:
+            async with session.get(LEADERBOARD_URL) as response:
+                if response.status == 200:
+                    return await response.json()
+                return []
     except:
         return []

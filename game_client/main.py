@@ -3,6 +3,7 @@ import sys
 import random
 import os
 import math
+import asyncio
 import auth
 
 # --- Configuración Básica ---
@@ -12,8 +13,10 @@ FPS = 60
 # --- Colores ---
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
-RED = (255, 0, 0)
+RED = (255, 50, 50)
 LIGHT_GREY = (200, 200, 200)
+BLUE_INACTIVE = pygame.Color('lightskyblue3')
+BLUE_ACTIVE = pygame.Color('dodgerblue2')
 
 # --- Fondo Animado (Starfield) ---
 NUM_STARS = 100
@@ -25,25 +28,17 @@ for i in range(NUM_STARS):
     size = random.randrange(1, 3)
     stars.append([x, y, speed, size])
 
-# Inicializamos Pygame y el mezclador de audio
+# Inicializamos Pygame
 pygame.mixer.init()
 pygame.init()
 font_name = pygame.font.match_font('arial')
 
-player_img = None
-mini_player_img = None
-laser_img = None
-blue_img = None
-red_img = None
-green_img = None
-
-shoot_sound = None
-expl_sound = None
+player_img = mini_player_img = laser_img = blue_img = red_img = green_img = None
+shoot_sound = expl_sound = None
 
 def load_assets():
     global player_img, mini_player_img, laser_img, blue_img, red_img, green_img
     global shoot_sound, expl_sound
-    
     img_dir = os.path.join(os.path.dirname(__file__), 'img')
     snd_dir = os.path.join(os.path.dirname(__file__), 'snd')
     
@@ -60,12 +55,11 @@ def load_assets():
         expl_sound = pygame.mixer.Sound(os.path.join(snd_dir, 'explosion.wav'))
         expl_sound.set_volume(0.4)
     except FileNotFoundError:
-        shoot_sound = None
-        expl_sound = None
+        shoot_sound = expl_sound = None
 
-def draw_text(surf, text, size, x, y, align="midtop"):
+def draw_text(surf, text, size, x, y, align="midtop", color=WHITE):
     font = pygame.font.Font(font_name, size)
-    text_surface = font.render(text, True, WHITE)
+    text_surface = font.render(text, True, color)
     text_rect = text_surface.get_rect()
     if align == "midtop":
         text_rect.midtop = (x, y)
@@ -80,27 +74,115 @@ def draw_lives(surf, x, y, lives, img):
         img_rect.y = y
         surf.blit(img, img_rect)
 
-# NUEVA VERSIÓN DE PANTALLA GAME OVER CON LEADERBOARD
-def show_go_screen(screen, score, token):
+# --- CLASE PARA CAJAS DE TEXTO ---
+class InputBox:
+    def __init__(self, x, y, w, h, text='', is_password=False):
+        self.rect = pygame.Rect(x, y, w, h)
+        self.color = BLUE_INACTIVE
+        self.text = text
+        self.font = pygame.font.Font(font_name, 24)
+        self.txt_surface = self.font.render(text, True, self.color)
+        self.active = False
+        self.is_password = is_password
+
+    def handle_event(self, event):
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            if self.rect.collidepoint(event.pos):
+                self.active = not self.active
+            else:
+                self.active = False
+            self.color = BLUE_ACTIVE if self.active else BLUE_INACTIVE
+            
+        if event.type == pygame.KEYDOWN:
+            if self.active:
+                if event.key == pygame.K_RETURN:
+                    return self.text
+                elif event.key == pygame.K_BACKSPACE:
+                    self.text = self.text[:-1]
+                else:
+                    self.text += event.unicode
+                
+                display_text = '*' * len(self.text) if self.is_password else self.text
+                self.txt_surface = self.font.render(display_text, True, WHITE)
+        return None
+
+    def update(self):
+        width = max(200, self.txt_surface.get_width() + 10)
+        self.rect.w = width
+
+    def draw(self, screen):
+        screen.blit(self.txt_surface, (self.rect.x + 5, self.rect.y + 5))
+        pygame.draw.rect(screen, self.color, self.rect, 2)
+
+# --- PANTALLA DE LOGIN GRÁFICA ASÍNCRONA ---
+async def login_screen(screen, clock):
+    input_box1 = InputBox(WIDTH // 2 - 100, HEIGHT // 2 - 40, 200, 32)
+    input_box2 = InputBox(WIDTH // 2 - 100, HEIGHT // 2 + 20, 200, 32, is_password=True)
+    input_boxes = [input_box1, input_box2]
+    error_msg = ""
+    
+    while True:
+        screen.fill(BLACK)
+        
+        # Estrellas de fondo
+        for star in stars:
+            star[1] += star[2] 
+            if star[1] > HEIGHT:
+                star[1] = random.randrange(-20, -5)
+                star[0] = random.randrange(0, WIDTH)
+            pygame.draw.rect(screen, LIGHT_GREY, (star[0], star[1], star[3], star[3]))
+
+        draw_text(screen, "🛸 GALAGA - TERMINAL DE ACCESO 🛸", 32, WIDTH // 2, HEIGHT // 4 - 50)
+        draw_text(screen, "Usuario:", 22, WIDTH // 2 - 110, HEIGHT // 2 - 35, align="topright")
+        draw_text(screen, "Clave:", 22, WIDTH // 2 - 110, HEIGHT // 2 + 25, align="topright")
+        draw_text(screen, "Haz clic en la caja para escribir. Presiona ENTER al terminar.", 16, WIDTH // 2, HEIGHT // 2 + 80)
+        
+        if error_msg:
+            draw_text(screen, error_msg, 18, WIDTH // 2, HEIGHT // 2 + 110, color=RED)
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            for box in input_boxes:
+                box.handle_event(event)
+            
+            # Intento de acceso
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN:
+                if input_box1.text and input_box2.text:
+                    token = await auth.login(input_box1.text, input_box2.text)
+                    if token:
+                        return token
+                    else:
+                        error_msg = "❌ Credenciales inválidas o error de conexión."
+                        input_box2.text = "" 
+                        input_box2.txt_surface = input_box2.font.render("", True, WHITE)
+
+        for box in input_boxes:
+            box.update()
+            box.draw(screen)
+
+        pygame.display.flip()
+        clock.tick(FPS)
+        await asyncio.sleep(0) 
+
+# --- PANTALLA GAME OVER ASÍNCRONA ---
+async def show_go_screen(screen, score, token):
     screen.fill(BLACK)
     draw_text(screen, "GAME OVER", 64, WIDTH // 2, HEIGHT // 4)
     draw_text(screen, f"Puntuación Final: {score}", 22, WIDTH // 2, HEIGHT // 2)
-    draw_text(screen, "Conectando con la base de datos...", 18, WIDTH // 2, HEIGHT * 3 // 4)
+    draw_text(screen, "Guardando puntuación...", 18, WIDTH // 2, HEIGHT * 3 // 4)
     pygame.display.flip()
     
-    # Si hizo puntos, los guardamos a través de la API
     if score > 0:
-        auth.save_score(token, score)
+        await auth.save_score(token, score)
     
-    # Pausa ligera y obtenemos el Top de pilotos
-    pygame.time.wait(1000)
-    leaderboard = auth.get_leaderboard()
+    leaderboard = await auth.get_leaderboard()
     
     screen.fill(BLACK)
     draw_text(screen, "GAME OVER", 50, WIDTH // 2, HEIGHT // 8)
     draw_text(screen, f"Tu Puntuación: {score}", 24, WIDTH // 2, HEIGHT // 8 + 60)
     
-    # Dibujamos el Top 5
     draw_text(screen, "--- TOP PILOTOS ---", 22, WIDTH // 2, HEIGHT // 2 - 40)
     y_offset = HEIGHT // 2 
     for i, p in enumerate(leaderboard[:5]):
@@ -108,23 +190,20 @@ def show_go_screen(screen, score, token):
         draw_text(screen, texto, 20, WIDTH // 2, y_offset)
         y_offset += 30
         
-    draw_text(screen, "Presiona cualquier tecla para reiniciar", 18, WIDTH // 2, HEIGHT - 50)
+    draw_text(screen, "Presiona ESPACIO para reiniciar", 18, WIDTH // 2, HEIGHT - 50)
     pygame.display.flip()
     
-    pygame.time.wait(1000) # Evita que saltes la pantalla por error
-    pygame.event.clear()
-    
     waiting = True
-    clock = pygame.time.Clock()
     while waiting:
-        clock.tick(FPS)
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
-            if event.type == pygame.KEYUP:
+            if event.type == pygame.KEYUP and event.key == pygame.K_SPACE:
                 waiting = False
+        await asyncio.sleep(0) 
 
+# --- CLASES DEL JUEGO ---
 class Player(pygame.sprite.Sprite):
     def __init__(self, all_sprites, bullets):
         super().__init__()
@@ -137,7 +216,6 @@ class Player(pygame.sprite.Sprite):
         self.bullets = bullets
         self.shoot_delay = 250
         self.last_shot = pygame.time.get_ticks()
-        
         self.lives = 3
         self.hidden = False
         self.hide_timer = pygame.time.get_ticks()
@@ -150,7 +228,6 @@ class Player(pygame.sprite.Sprite):
 
         self.speedx = 0
         keystate = pygame.key.get_pressed()
-        
         if not self.hidden:
             if keystate[pygame.K_LEFT]:
                 self.speedx = -6 
@@ -188,7 +265,6 @@ class Bullet(pygame.sprite.Sprite):
         self.rect.bottom = y
         self.rect.centerx = x
         self.speedy = -12 
-
     def update(self):
         self.rect.y += self.speedy
         if self.rect.bottom < 0:
@@ -203,7 +279,6 @@ class EnemyBullet(pygame.sprite.Sprite):
         self.rect.top = y
         self.rect.centerx = x
         self.speedy = 4 
-
     def update(self):
         self.rect.y += self.speedy
         if self.rect.top > HEIGHT:
@@ -216,7 +291,6 @@ class Enemy(pygame.sprite.Sprite):
         self.enemy_bullets = enemy_bullets
         self.col = col
         self.row = row
-        
         self.target_x = 120 + (col * 80)
         self.target_y = 60 + (row * 60)
         
@@ -230,7 +304,6 @@ class Enemy(pygame.sprite.Sprite):
             self.dive_prob = 0.0005 
             self.pos_x = float(self.target_x)
             self.pos_y = float(-100)
-            
         elif row == 1:
             self.tipo = 'mariposa'
             self.image = red_img.copy()
@@ -241,7 +314,6 @@ class Enemy(pygame.sprite.Sprite):
             self.dive_prob = 0.002 
             self.pos_x = float(-100)
             self.pos_y = float(random.randint(0, HEIGHT // 3))
-            
         else:
             self.tipo = 'abeja'
             self.image = blue_img.copy()
@@ -256,7 +328,6 @@ class Enemy(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.centerx = int(self.pos_x)
         self.rect.centery = int(self.pos_y)
-        
         self.state = 'entering'
         self.start_dive_x = 0
 
@@ -266,67 +337,47 @@ class Enemy(pygame.sprite.Sprite):
             self.pos_y += (self.target_y - self.pos_y) * 0.03
             self.rect.centerx = int(self.pos_x)
             self.rect.centery = int(self.pos_y)
-            
             if abs(self.target_x - self.pos_x) < 2 and abs(self.target_y - self.pos_y) < 2:
                 self.state = 'formation'
-                
         elif self.state == 'formation':
             self.rect.centerx = int(self.target_x + math.sin(pygame.time.get_ticks() / 500.0) * 20)
             self.rect.centery = int(self.target_y + math.cos(pygame.time.get_ticks() / 500.0) * 10)
-            
             if random.random() < self.dive_prob:
                 self.state = 'diving'
                 self.start_dive_x = self.rect.centerx
                 self.pos_x = float(self.rect.centerx)
                 self.pos_y = float(self.rect.y)
-                
             if self.tipo == 'jefe' and random.random() < 0.002:
                 self.shoot()
-                
         elif self.state == 'diving':
             self.pos_y += self.dive_speed
             self.rect.y = int(self.pos_y)
-            
             self.rect.centerx = int(self.start_dive_x + math.sin(self.rect.y / 50.0) * self.curve_width)
-            
             if self.tipo == 'jefe' and random.random() < 0.01:
                 self.shoot()
-                
             if self.rect.top > HEIGHT:
                 self.state = 'entering'
                 if self.tipo == 'jefe':
-                    self.pos_x = float(self.target_x)
-                    self.pos_y = float(-100)
+                    self.pos_x, self.pos_y = float(self.target_x), float(-100)
                 elif self.tipo == 'mariposa':
-                    self.pos_x = float(-100)
-                    self.pos_y = float(random.randint(0, HEIGHT // 3))
+                    self.pos_x, self.pos_y = float(-100), float(random.randint(0, HEIGHT // 3))
                 else:
-                    self.pos_x = float(WIDTH + 100)
-                    self.pos_y = float(random.randint(0, HEIGHT // 3))
+                    self.pos_x, self.pos_y = float(WIDTH + 100), float(random.randint(0, HEIGHT // 3))
                 
     def shoot(self):
         bullet = EnemyBullet(self.rect.centerx, self.rect.bottom)
         self.all_sprites.add(bullet)
         self.enemy_bullets.add(bullet)
 
-def main():
-    print("\n" + "="*40)
-    print("🛸 BIENVENIDO A GALAGA - TERMINAL DE ACCESO 🛸")
-    print("="*40)
-    username = input("👤 Ingresa tu usuario: ")
-    password = input("🔑 Ingresa tu contraseña: ")
-    
-    token = auth.login(username, password)
-    if not token:
-        sys.exit()
-        
-    print("✅ Acceso concedido. Inicializando motor gráfico...\n")
-
+# --- CICLO PRINCIPAL ASÍNCRONO ---
+async def main():
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
-    pygame.display.set_caption("Galaga - Proyecto Final Ingeniería de Software")
+    pygame.display.set_caption("Galaga - Proyecto Final Web")
     clock = pygame.time.Clock()
     
     load_assets()
+
+    token = await login_screen(screen, clock)
 
     game_over = False
     running = True
@@ -348,14 +399,13 @@ def main():
 
     while running:
         if game_over:
-            # Enviamos el token a la pantalla de game over para que guarde el puntaje
-            show_go_screen(screen, score, token)
+            await show_go_screen(screen, score, token)
             game_over = False
             
-            all_sprites = pygame.sprite.Group()
-            bullets = pygame.sprite.Group()
-            enemies = pygame.sprite.Group()
-            enemy_bullets = pygame.sprite.Group()
+            all_sprites.empty()
+            bullets.empty()
+            enemies.empty()
+            enemy_bullets.empty()
             
             player = Player(all_sprites, bullets)
             all_sprites.add(player)
@@ -373,20 +423,15 @@ def main():
         all_sprites.update()
 
         hits = pygame.sprite.groupcollide(enemies, bullets, False, True)
-        
         for enemy, bullet_list in hits.items():
             enemy.hp -= len(bullet_list)
-            
             if enemy.tipo == 'jefe' and enemy.hp == 1:
                 enemy.image.set_alpha(150) 
-                
             if enemy.hp <= 0:
                 score += enemy.points
                 col, row = enemy.col, enemy.row 
                 enemy.kill()
-                
-                if expl_sound:
-                    expl_sound.play()
+                if expl_sound: expl_sound.play()
                 
                 new_enemy = Enemy(all_sprites, enemy_bullets, col, row)
                 all_sprites.add(new_enemy)
@@ -394,9 +439,7 @@ def main():
 
         player_hit = pygame.sprite.spritecollide(player, enemies, False) or pygame.sprite.spritecollide(player, enemy_bullets, False)
         if player_hit and not player.hidden:
-            if expl_sound:
-                expl_sound.play()
-            
+            if expl_sound: expl_sound.play()
             player.hide()
             player.lives -= 1
             if player.lives <= 0:
@@ -409,20 +452,16 @@ def main():
             if star[1] > HEIGHT:
                 star[1] = random.randrange(-20, -5)
                 star[0] = random.randrange(0, WIDTH)
-                star[2] = random.randrange(1, 5)
-                star[3] = random.randrange(1, 3)
             pygame.draw.rect(screen, LIGHT_GREY, (star[0], star[1], star[3], star[3]))
 
         all_sprites.draw(screen)
-        
         draw_text(screen, f"SCORE: {score}", 24, WIDTH - 20, 10, align="topright")
         draw_lives(screen, 10, 10, player.lives, mini_player_img)
         
         pygame.display.flip()
         clock.tick(FPS)
-
-    pygame.quit()
-    sys.exit()
+        
+        await asyncio.sleep(0)
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
