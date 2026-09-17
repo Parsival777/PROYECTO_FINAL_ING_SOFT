@@ -2,7 +2,7 @@ name: Deploy Galaga Web
 
 on:
   push:
-    branches: [ main, master ] # Se ejecuta cada vez que haces push a tu rama principal
+    branches: [ main, master ]
 
 permissions:
   contents: write
@@ -26,8 +26,7 @@ jobs:
           pip install pygbag
 
       - name: Compilar el juego a WebAssembly
-        # Asume que tu main.py y la carpeta img/ están dentro de "game_client"
-        run: python -m pygbag --build game_client
+        run: python -m pygbag --disable-sound-format-error --build game_client
 
       - name: Desplegar en GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
