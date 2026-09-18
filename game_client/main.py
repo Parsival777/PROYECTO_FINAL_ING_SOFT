@@ -17,6 +17,7 @@ RED = (255, 50, 50)
 LIGHT_GREY = (200, 200, 200)
 BLUE_INACTIVE = pygame.Color('lightskyblue3')
 BLUE_ACTIVE = pygame.Color('dodgerblue2')
+RARITY_COLORS = {"common": (150, 150, 150), "epic": (163, 53, 238), "legendary": (255, 128, 0)}
 
 # --- Fondo Animado (Starfield) ---
 NUM_STARS = 100
@@ -36,19 +37,34 @@ font_name = pygame.font.match_font('arial')
 player_img = mini_player_img = laser_img = blue_img = red_img = green_img = None
 shoot_sound = expl_sound = None
 music_loaded = False
+assets = {}
 
 def load_assets():
     global player_img, mini_player_img, laser_img, blue_img, red_img, green_img
-    global shoot_sound, expl_sound, music_loaded
+    global shoot_sound, expl_sound, music_loaded, assets
     img_dir = os.path.join(os.path.dirname(__file__), 'img')
     snd_dir = os.path.join(os.path.dirname(__file__), 'snd')
     
-    player_img = pygame.transform.scale(pygame.image.load(os.path.join(img_dir, 'main_ship.png')).convert_alpha(), (40, 40))
+    def get_img(name, size, fallback_color):
+        try:
+            return pygame.transform.scale(pygame.image.load(os.path.join(img_dir, name)).convert_alpha(), size)
+        except:
+            s = pygame.Surface(size, pygame.SRCALPHA)
+            s.fill(fallback_color)
+            return s
+    
+    # Nuevas imágenes (Corazón y Skins extras)
+    assets['heart'] = get_img('heart.png', (25, 25), RED)
+    assets['skin_stealth'] = get_img('skin_stealth.png', (40, 40), (100, 100, 100))
+    assets['skin_neon'] = get_img('skin_neon.png', (40, 40), (0, 255, 255))
+    assets['player_default'] = get_img('main_ship.png', (40, 40), (150, 150, 150))
+    
+    player_img = assets['player_default']
     mini_player_img = pygame.transform.scale(player_img, (25, 25))
-    laser_img = pygame.transform.scale(pygame.image.load(os.path.join(img_dir, 'laser.png')).convert_alpha(), (25, 40))
-    blue_img = pygame.transform.scale(pygame.image.load(os.path.join(img_dir, 'blue_ship.png')).convert_alpha(), (40, 40))
-    red_img = pygame.transform.scale(pygame.image.load(os.path.join(img_dir, 'red_ship.png')).convert_alpha(), (40, 40))
-    green_img = pygame.transform.scale(pygame.image.load(os.path.join(img_dir, 'green_ship.png')).convert_alpha(), (40, 40))
+    laser_img = get_img('laser.png', (25, 40), (255, 255, 0))
+    blue_img = get_img('blue_ship.png', (40, 40), (0, 0, 255))
+    red_img = get_img('red_ship.png', (40, 40), (255, 0, 0))
+    green_img = get_img('green_ship.png', (40, 40), (0, 255, 0))
 
     try:
         shoot_sound = pygame.mixer.Sound(os.path.join(snd_dir, 'laser.wav'))
@@ -73,14 +89,36 @@ def draw_text(surf, text, size, x, y, align="midtop", color=WHITE):
         text_rect.midtop = (x, y)
     elif align == "topright":
         text_rect.topright = (x, y)
+    elif align == "center":
+        text_rect.center = (x, y)
     surf.blit(text_surface, text_rect)
 
-def draw_lives(surf, x, y, lives, img):
+def draw_lives(surf, x, y, lives):
     for i in range(lives):
-        img_rect = img.get_rect()
-        img_rect.x = x + 30 * i
-        img_rect.y = y
-        surf.blit(img, img_rect)
+        rect = assets['heart'].get_rect()
+        rect.x = x + 30 * i
+        rect.y = y
+        surf.blit(assets['heart'], rect)
+
+# --- BASE DE DATOS DE SKINS ---
+CATALOGO = [
+    {"id": "player_default", "name": "Nave Base", "price": 0, "rarity": "common"},
+    {"id": "skin_stealth", "name": "Caza Furtivo", "price": 1500, "rarity": "epic"},
+    {"id": "skin_neon", "name": "Neón Cósmico", "price": 3000, "rarity": "legendary"}
+]
+
+def draw_card(screen, item, x, y, status, highlight=False):
+    rect = pygame.Rect(x, y, 160, 220)
+    color = RARITY_COLORS[item["rarity"]]
+    pygame.draw.rect(screen, (30, 30, 40), rect)
+    pygame.draw.rect(screen, color if not highlight else WHITE, rect, 3 if not highlight else 5)
+    
+    img = pygame.transform.scale(assets[item["id"]], (80, 80))
+    screen.blit(img, (x + 40, y + 30))
+    
+    draw_text(screen, item["name"], 18, x + 80, y + 130, align="center", color=color)
+    draw_text(screen, status, 18, x + 80, y + 170, align="center", color=WHITE)
+
 
 # --- CLASE PARA CAJAS DE TEXTO ---
 class InputBox:
@@ -197,7 +235,71 @@ async def login_screen(screen, clock):
         clock.tick(FPS)
         await asyncio.sleep(0) 
 
-async def lobby_screen(screen, clock, user, coins, skin_name):
+async def shop_and_locker(screen, clock, token, coins, owned_skins, current_skin, mode="SHOP"):
+    waiting, msg = True, ""
+    while waiting:
+        screen.fill(BLACK)
+        for star in stars:
+            star[1] += star[2]
+            if star[1] > HEIGHT:
+                star[1] = random.randrange(-20, -5)
+                star[0] = random.randrange(0, WIDTH)
+            pygame.draw.rect(screen, LIGHT_GREY, (star[0], star[1], star[3], star[3]))
+            
+        draw_text(screen, "🏪 TIENDA DE ITEMS 🏪" if mode == "SHOP" else "🗄️ TU LOCKER 🗄️", 36, WIDTH // 2, 50, color=BLUE_ACTIVE)
+        draw_text(screen, f"Billetera: {coins} 🪙", 24, WIDTH // 2, 100, color=(255, 215, 0))
+        
+        spacing = (WIDTH - (len(CATALOGO) * 160)) // (len(CATALOGO) + 1)
+        
+        for i, item in enumerate(CATALOGO):
+            x = spacing + (i * (160 + spacing))
+            y = 180
+            
+            if mode == "SHOP":
+                status = "COMPRADO" if item["id"] in owned_skins else f"{item['price']} 🪙"
+            else:
+                if item["id"] == current_skin: status = "EQUIPADO"
+                elif item["id"] in owned_skins: status = "DISPONIBLE"
+                else: status = "BLOQUEADO"
+                
+            draw_card(screen, item, x, y, status, highlight=(item["id"] == current_skin))
+            draw_text(screen, f"[{i+1}]", 20, x + 80, y + 420, align="center")
+
+        draw_text(screen, f"Presiona 1, 2 o 3 para {'Comprar' if mode == 'SHOP' else 'Equipar'}", 20, WIDTH // 2, 450)
+        draw_text(screen, "[ TAB ] Cambiar entre Tienda/Locker  |  [ ESC ] Volver al Lobby", 18, WIDTH // 2, 500, color=LIGHT_GREY)
+        if msg: draw_text(screen, msg, 20, WIDTH // 2, 550, color=(255, 255, 0))
+
+        pygame.display.flip()
+        clock.tick(FPS)
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT: sys.exit()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE: return coins, current_skin, owned_skins
+                if event.key == pygame.K_TAB: mode = "LOCKER" if mode == "SHOP" else "SHOP"; msg = ""
+                
+                if event.key in [pygame.K_1, pygame.K_2, pygame.K_3]:
+                    idx = event.key - pygame.K_1
+                    if idx < len(CATALOGO):
+                        selected = CATALOGO[idx]
+                        if mode == "SHOP":
+                            if selected["id"] in owned_skins: msg = "Ya tienes esta skin."
+                            else:
+                                success, text = await auth.buy_skin(token, selected["id"], selected["price"])
+                                msg = text
+                                if success:
+                                    coins -= selected["price"]
+                                    owned_skins.append(selected["id"])
+                                    current_skin = selected["id"]
+                        elif mode == "LOCKER":
+                            if selected["id"] in owned_skins:
+                                success, text = await auth.equip_skin(token, selected["id"])
+                                msg = text
+                                if success: current_skin = selected["id"]
+                            else: msg = "Debes comprarla en la tienda primero."
+        await asyncio.sleep(0)
+
+async def lobby_screen(screen, clock, user, coins, current_skin):
     waiting = True
     while waiting:
         screen.fill(BLACK)
@@ -212,14 +314,11 @@ async def lobby_screen(screen, clock, user, coins, skin_name):
         draw_text(screen, f"Piloto: {user}", 24, WIDTH // 2, HEIGHT // 2 - 60)
         draw_text(screen, f"Billetera: {coins} 🪙", 24, WIDTH // 2, HEIGHT // 2 - 20, color=(255, 215, 0))
         
-        skin_visual = "Nave Base"
-        if skin_name == "player_pro": skin_visual = "Nave Pro (Azul)"
-        elif skin_name == "player_elite": skin_visual = "Nave Élite (Verde)"
-        
-        draw_text(screen, f"Skin Equipada: {skin_visual}", 20, WIDTH // 2, HEIGHT // 2 + 15, color=LIGHT_GREY)
+        skin_name = next((s["name"] for s in CATALOGO if s["id"] == current_skin), "Desconocida")
+        draw_text(screen, f"Nave Actual: {skin_name}", 20, WIDTH // 2, HEIGHT // 2 + 15, color=LIGHT_GREY)
 
         draw_text(screen, "[ ENTER ] Iniciar Misión", 24, WIDTH // 2, HEIGHT // 2 + 90, color=(100, 255, 100))
-        draw_text(screen, "[ T ] Tienda de Naves", 24, WIDTH // 2, HEIGHT // 2 + 130, color=(100, 200, 255))
+        draw_text(screen, "[ T ] Tienda / Locker", 24, WIDTH // 2, HEIGHT // 2 + 130, color=(163, 53, 238))
         draw_text(screen, "[ ESC ] Cerrar Sesión", 20, WIDTH // 2, HEIGHT // 2 + 190, color=RED)
 
         pygame.display.flip()
@@ -231,56 +330,8 @@ async def lobby_screen(screen, clock, user, coins, skin_name):
                 sys.exit()
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_RETURN: return "PLAY"
-                if event.key == pygame.K_t: return "SHOP"
+                if event.key == pygame.K_t: return "SHOP_LOCKER"
                 if event.key == pygame.K_ESCAPE: return "LOGOUT"
-        await asyncio.sleep(0)
-
-async def shop_screen(screen, clock, token, coins):
-    waiting = True
-    msg = ""
-    while waiting:
-        screen.fill(BLACK)
-        for star in stars:
-            star[1] += star[2]
-            if star[1] > HEIGHT:
-                star[1] = random.randrange(-20, -5)
-                star[0] = random.randrange(0, WIDTH)
-            pygame.draw.rect(screen, LIGHT_GREY, (star[0], star[1], star[3], star[3]))
-
-        draw_text(screen, "🏪 TIENDA INTERGALÁCTICA 🏪", 36, WIDTH // 2, HEIGHT // 4 - 50, color=BLUE_ACTIVE)
-        draw_text(screen, f"Tus Monedas: {coins} 🪙", 24, WIDTH // 2, HEIGHT // 4 + 20, color=(255, 215, 0))
-
-        draw_text(screen, "1. Nave Base (Gris) - Equipar [GRATIS]", 22, WIDTH // 2, HEIGHT // 2 - 30)
-        draw_text(screen, "2. Nave Pro (Azul) - Comprar/Equipar [500 🪙]", 22, WIDTH // 2, HEIGHT // 2 + 10, color=(100, 100, 255))
-        draw_text(screen, "3. Nave Élite (Verde) - Comprar/Equipar [1000 🪙]", 22, WIDTH // 2, HEIGHT // 2 + 50, color=(100, 255, 100))
-
-        draw_text(screen, "Presiona 1, 2 o 3 en tu teclado.", 20, WIDTH // 2, HEIGHT // 2 + 120)
-        draw_text(screen, "[ ESC ] Volver al Lobby", 20, WIDTH // 2, HEIGHT // 2 + 160, color=RED)
-
-        if msg:
-            draw_text(screen, msg, 20, WIDTH // 2, HEIGHT - 50, color=(255, 255, 0))
-
-        pygame.display.flip()
-        clock.tick(FPS)
-
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                sys.exit()
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_ESCAPE:
-                    waiting = False
-                if event.key == pygame.K_1:
-                    success, text = await auth.buy_skin(token, "player_default", 0)
-                    msg = text
-                if event.key == pygame.K_2:
-                    success, text = await auth.buy_skin(token, "player_pro", 500)
-                    msg = text
-                    if success: coins -= 500
-                if event.key == pygame.K_3:
-                    success, text = await auth.buy_skin(token, "player_elite", 1000)
-                    msg = text
-                    if success: coins -= 1000
         await asyncio.sleep(0)
 
 async def show_go_screen(screen, score, token):
@@ -488,105 +539,87 @@ async def main():
     
     load_assets()
 
-    token, current_user = await login_screen(screen, clock)
-
-    # --- BUCLE DEL LOBBY (Permite ir y venir sin reiniciar todo) ---
     while True:
+        token, current_user = await login_screen(screen, clock)
+
         if token:
             profile = await auth.get_profile(token)
             coins = profile.get("coins", 0)
-            skin_name = profile.get("current_skin", "player_default")
+            current_skin = profile.get("current_skin", "player_default")
+            owned_skins = profile.get("owned_skins", "player_default").split(',')
         else:
-            coins = 0
-            skin_name = "player_default"
+            coins, current_skin, owned_skins = 0, "player_default", ["player_default"]
 
-        # Asignación de la skin que el usuario compró en la tienda
-        if skin_name == "player_pro": skin_actual = blue_img
-        elif skin_name == "player_elite": skin_actual = green_img
-        else: skin_actual = player_img
+        while True:
+            action = await lobby_screen(screen, clock, current_user, coins, current_skin)
 
-        action = await lobby_screen(screen, clock, current_user, coins, skin_name)
-
-        if action == "LOGOUT":
-            return await main() # Cierra sesión reiniciando al login
-            
-        elif action == "SHOP":
-            if token: await shop_screen(screen, clock, token, coins)
-            
-        elif action == "PLAY":
-            # --- EL BUCLE DE TU JUEGO INTACTO ---
-            if music_loaded: pygame.mixer.music.play(-1)
-
-            game_over = False
-            running = True
-            score = 0
-            
-            all_sprites = pygame.sprite.Group()
-            bullets = pygame.sprite.Group()
-            enemies = pygame.sprite.Group()
-            enemy_bullets = pygame.sprite.Group() 
-            
-            player = Player(all_sprites, bullets, skin_actual)
-            all_sprites.add(player)
-            
-            for row in range(3):
-                for col in range(7):
-                    enemy = Enemy(all_sprites, enemy_bullets, col, row)
-                    all_sprites.add(enemy)
-                    enemies.add(enemy)
-
-            while running:
-                if game_over:
-                    if music_loaded: pygame.mixer.music.stop()
-                    await show_go_screen(screen, score, token)
-                    break # Rompe el loop de juego, regresando al Lobby
-
-                for event in pygame.event.get():
-                    if event.type == pygame.QUIT:
-                        pygame.quit()
-                        sys.exit()
-
-                all_sprites.update()
-
-                hits = pygame.sprite.groupcollide(enemies, bullets, False, True)
-                for enemy, bullet_list in hits.items():
-                    enemy.hp -= len(bullet_list)
-                    if enemy.tipo == 'jefe' and enemy.hp == 1:
-                        enemy.image.set_alpha(150) 
-                    if enemy.hp <= 0:
-                        score += enemy.points
-                        col, row = enemy.col, enemy.row 
-                        enemy.kill()
-                        if expl_sound: expl_sound.play()
-                        
-                        new_enemy = Enemy(all_sprites, enemy_bullets, col, row)
-                        all_sprites.add(new_enemy)
-                        enemies.add(new_enemy)
-
-                player_hit = pygame.sprite.spritecollide(player, enemies, False) or pygame.sprite.spritecollide(player, enemy_bullets, False)
-                if player_hit and not player.hidden:
-                    if expl_sound: expl_sound.play()
-                    player.hide()
-                    player.lives -= 1
-                    if player.lives <= 0:
-                        game_over = True
-
-                screen.fill(BLACK)
-
-                for star in stars:
-                    star[1] += star[2] 
-                    if star[1] > HEIGHT:
-                        star[1] = random.randrange(-20, -5)
-                        star[0] = random.randrange(0, WIDTH)
-                    pygame.draw.rect(screen, LIGHT_GREY, (star[0], star[1], star[3], star[3]))
-
-                all_sprites.draw(screen)
-                draw_text(screen, f"SCORE: {score}", 24, WIDTH - 20, 10, align="topright")
-                draw_lives(screen, 10, 10, player.lives, mini_player_img)
+            if action == "LOGOUT":
+                break 
                 
-                pygame.display.flip()
-                clock.tick(FPS)
-                await asyncio.sleep(0)
+            elif action == "SHOP_LOCKER":
+                if token:
+                    coins, current_skin, owned_skins = await shop_and_locker(screen, clock, token, coins, owned_skins, current_skin, "SHOP")
+                
+            elif action == "PLAY":
+                if music_loaded: pygame.mixer.music.play(-1)
+
+                game_over, running, score = False, True, 0
+                all_sprites, bullets, enemies, enemy_bullets = pygame.sprite.Group(), pygame.sprite.Group(), pygame.sprite.Group(), pygame.sprite.Group()
+                
+                player = Player(all_sprites, bullets, assets.get(current_skin, assets["player_default"]))
+                all_sprites.add(player)
+                
+                for row in range(3):
+                    for col in range(7):
+                        enemy = Enemy(all_sprites, enemy_bullets, col, row)
+                        all_sprites.add(enemy); enemies.add(enemy)
+
+                while running:
+                    if game_over:
+                        if music_loaded: pygame.mixer.music.stop()
+                        await show_go_screen(screen, score, token)
+                        if token:
+                            profile = await auth.get_profile(token)
+                            coins = profile.get("coins", coins)
+                        break 
+
+                    for event in pygame.event.get():
+                        if event.type == pygame.QUIT: sys.exit()
+
+                    all_sprites.update()
+
+                    hits = pygame.sprite.groupcollide(enemies, bullets, False, True)
+                    for enemy, bullet_list in hits.items():
+                        enemy.hp -= len(bullet_list)
+                        if enemy.tipo == 'jefe' and enemy.hp == 1: enemy.image.set_alpha(150) 
+                        if enemy.hp <= 0:
+                            score += enemy.points
+                            col, row = enemy.col, enemy.row 
+                            enemy.kill()
+                            if expl_sound: expl_sound.play()
+                            new_enemy = Enemy(all_sprites, enemy_bullets, col, row)
+                            all_sprites.add(new_enemy); enemies.add(new_enemy)
+
+                    player_hit = pygame.sprite.spritecollide(player, enemies, False) or pygame.sprite.spritecollide(player, enemy_bullets, False)
+                    if player_hit and not player.hidden:
+                        if expl_sound: expl_sound.play()
+                        player.hide()
+                        player.lives -= 1
+                        if player.lives <= 0: game_over = True
+
+                    screen.fill(BLACK)
+                    for star in stars:
+                        star[1] += star[2] 
+                        if star[1] > HEIGHT: star[1], star[0] = random.randrange(-20, -5), random.randrange(0, WIDTH)
+                        pygame.draw.rect(screen, LIGHT_GREY, (star[0], star[1], star[3], star[3]))
+
+                    all_sprites.draw(screen)
+                    draw_text(screen, f"SCORE: {score}", 24, WIDTH - 20, 10, align="topright")
+                    draw_lives(screen, 10, 10, player.lives) 
+                    
+                    pygame.display.flip()
+                    clock.tick(FPS)
+                    await asyncio.sleep(0)
 
 if __name__ == "__main__":
     asyncio.run(main())

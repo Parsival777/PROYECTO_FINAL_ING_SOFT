@@ -88,14 +88,13 @@ async def get_leaderboard():
     if status == 200 and data: return data
     return []
 
-# --- NUEVAS FUNCIONES DE TIENDA Y PERFIL ---
 async def get_profile(token):
     if sys.platform == "emscripten":
-        return {"username": "Invitado", "coins": 9999, "current_skin": "player_default"}
+        return {"username": "Invitado", "coins": 9999, "current_skin": "player_default", "owned_skins": "player_default"}
     status, data = await make_request("/me", "GET", token=token)
     if status == 200 and data:
         return data
-    return {"coins": 0, "current_skin": "player_default"}
+    return {"coins": 0, "current_skin": "player_default", "owned_skins": "player_default"}
 
 async def buy_skin(token, skin_name, cost):
     if sys.platform == "emscripten":
@@ -106,3 +105,13 @@ async def buy_skin(token, skin_name, cost):
     elif data and "error" in data:
         return False, data["error"]
     return False, "Error en transacción."
+
+async def equip_skin(token, skin_name):
+    if sys.platform == "emscripten":
+        return True, "Equipado (Modo Web)"
+    status, data = await make_request("/equip", "POST", payload={"skin_name": skin_name}, token=token)
+    if status == 200:
+        return True, "Skin equipada."
+    elif data and "error" in data:
+        return False, data["error"]
+    return False, "Error al equipar."
