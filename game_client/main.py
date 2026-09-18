@@ -119,7 +119,6 @@ def draw_card(screen, item, x, y, status, highlight=False):
     draw_text(screen, item["name"], 18, x + 80, y + 130, align="center", color=color)
     draw_text(screen, status, 18, x + 80, y + 170, align="center", color=WHITE)
 
-
 # --- CLASE PARA CAJAS DE TEXTO ---
 class InputBox:
     def __init__(self, x, y, w, h, text='', is_password=False):
@@ -145,7 +144,7 @@ class InputBox:
                     return self.text
                 elif event.key == pygame.K_BACKSPACE:
                     self.text = self.text[:-1]
-                elif event.key not in [pygame.K_TAB, pygame.K_ESCAPE]:
+                elif event.key not in [pygame.K_TAB, pygame.K_ESCAPE, pygame.K_F11]:
                     self.text += event.unicode
                 
                 display_text = '*' * len(self.text) if self.is_password else self.text
@@ -161,7 +160,6 @@ class InputBox:
         pygame.draw.rect(screen, self.color, self.rect, 2)
 
 # --- PANTALLAS DE INTERFAZ ---
-
 async def login_screen(screen, clock):
     input_box1 = InputBox(WIDTH // 2 - 100, HEIGHT // 2 - 40, 200, 32)
     input_box2 = InputBox(WIDTH // 2 - 100, HEIGHT // 2 + 20, 200, 32, is_password=True)
@@ -178,13 +176,14 @@ async def login_screen(screen, clock):
                 star[0] = random.randrange(0, WIDTH)
             pygame.draw.rect(screen, LIGHT_GREY, (star[0], star[1], star[3], star[3]))
 
-        draw_text(screen, f"🛸 GALAGA - MODO {estado} 🛸", 32, WIDTH // 2, HEIGHT // 4 - 50)
+        draw_text(screen, f"--- GALAGA - MODO {estado} ---", 32, WIDTH // 2, HEIGHT // 4 - 50, color=BLUE_ACTIVE)
         draw_text(screen, "Usuario:", 22, WIDTH // 2 - 110, HEIGHT // 2 - 35, align="topright")
         draw_text(screen, "Clave:", 22, WIDTH // 2 - 110, HEIGHT // 2 + 25, align="topright")
         draw_text(screen, "ENTER: Aceptar | TAB: Cambiar Modo | ESC: Invitado", 18, WIDTH // 2, HEIGHT // 2 + 80, color=(100, 255, 100))
+        draw_text(screen, "[ F11 ] Pantalla Completa", 16, WIDTH // 2, HEIGHT - 30, color=LIGHT_GREY)
         
         if error_msg:
-            draw_text(screen, error_msg, 18, WIDTH // 2, HEIGHT // 2 + 115, color=RED if "❌" in error_msg else WHITE)
+            draw_text(screen, error_msg, 18, WIDTH // 2, HEIGHT // 2 + 115, color=RED if "Error" in error_msg else WHITE)
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -192,7 +191,9 @@ async def login_screen(screen, clock):
                 sys.exit()
                 
             if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_TAB:
+                if event.key == pygame.K_F11:
+                    pygame.display.toggle_fullscreen()
+                elif event.key == pygame.K_TAB:
                     estado = "REGISTRO" if estado == "LOGIN" else "LOGIN"
                     error_msg = f"Modo {estado} activado."
                 elif event.key == pygame.K_ESCAPE:
@@ -212,7 +213,7 @@ async def login_screen(screen, clock):
                         if token:
                             return token, input_box1.text
                         else:
-                            error_msg = "❌ Credenciales inválidas o error."
+                            error_msg = "Error: Credenciales inválidas o falla de conexión."
                             input_box2.text = "" 
                             input_box2.txt_surface = input_box2.font.render("", True, WHITE)
                     else:
@@ -246,8 +247,8 @@ async def shop_and_locker(screen, clock, token, coins, owned_skins, current_skin
                 star[0] = random.randrange(0, WIDTH)
             pygame.draw.rect(screen, LIGHT_GREY, (star[0], star[1], star[3], star[3]))
             
-        draw_text(screen, "🏪 TIENDA DE ITEMS 🏪" if mode == "SHOP" else "🗄️ TU LOCKER 🗄️", 36, WIDTH // 2, 50, color=BLUE_ACTIVE)
-        draw_text(screen, f"Billetera: {coins} 🪙", 24, WIDTH // 2, 100, color=(255, 215, 0))
+        draw_text(screen, "--- TIENDA DE ITEMS ---" if mode == "SHOP" else "--- TU LOCKER ---", 36, WIDTH // 2, 50, color=BLUE_ACTIVE)
+        draw_text(screen, f"Billetera: {coins} CR", 24, WIDTH // 2, 100, color=(255, 215, 0))
         
         spacing = (WIDTH - (len(CATALOGO) * 160)) // (len(CATALOGO) + 1)
         
@@ -256,17 +257,18 @@ async def shop_and_locker(screen, clock, token, coins, owned_skins, current_skin
             y = 180
             
             if mode == "SHOP":
-                status = "COMPRADO" if item["id"] in owned_skins else f"{item['price']} 🪙"
+                status = "COMPRADO" if item["id"] in owned_skins else f"{item['price']} CR"
             else:
                 if item["id"] == current_skin: status = "EQUIPADO"
                 elif item["id"] in owned_skins: status = "DISPONIBLE"
                 else: status = "BLOQUEADO"
                 
             draw_card(screen, item, x, y, status, highlight=(item["id"] == current_skin))
-            draw_text(screen, f"[{i+1}]", 20, x + 80, y + 420, align="center")
+            draw_text(screen, f"[{i+1}]", 20, x + 80, y + 240, align="center")
 
         draw_text(screen, f"Presiona 1, 2 o 3 para {'Comprar' if mode == 'SHOP' else 'Equipar'}", 20, WIDTH // 2, 450)
-        draw_text(screen, "[ TAB ] Cambiar entre Tienda/Locker  |  [ ESC ] Volver al Lobby", 18, WIDTH // 2, 500, color=LIGHT_GREY)
+        draw_text(screen, "[ TAB ] Cambiar Tienda/Locker  |  [ ESC ] Volver al Lobby", 18, WIDTH // 2, 500, color=LIGHT_GREY)
+        draw_text(screen, "[ F11 ] Pantalla Completa", 16, WIDTH // 2, HEIGHT - 30, color=LIGHT_GREY)
         if msg: draw_text(screen, msg, 20, WIDTH // 2, 550, color=(255, 255, 0))
 
         pygame.display.flip()
@@ -275,6 +277,7 @@ async def shop_and_locker(screen, clock, token, coins, owned_skins, current_skin
         for event in pygame.event.get():
             if event.type == pygame.QUIT: sys.exit()
             if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_F11: pygame.display.toggle_fullscreen()
                 if event.key == pygame.K_ESCAPE: return coins, current_skin, owned_skins
                 if event.key == pygame.K_TAB: mode = "LOCKER" if mode == "SHOP" else "SHOP"; msg = ""
                 
@@ -310,9 +313,9 @@ async def lobby_screen(screen, clock, user, coins, current_skin):
                 star[0] = random.randrange(0, WIDTH)
             pygame.draw.rect(screen, LIGHT_GREY, (star[0], star[1], star[3], star[3]))
 
-        draw_text(screen, "🛸 LOBBY DE PILOTOS 🛸", 40, WIDTH // 2, HEIGHT // 4 - 50, color=BLUE_ACTIVE)
+        draw_text(screen, "--- LOBBY DE PILOTOS ---", 40, WIDTH // 2, HEIGHT // 4 - 50, color=BLUE_ACTIVE)
         draw_text(screen, f"Piloto: {user}", 24, WIDTH // 2, HEIGHT // 2 - 60)
-        draw_text(screen, f"Billetera: {coins} 🪙", 24, WIDTH // 2, HEIGHT // 2 - 20, color=(255, 215, 0))
+        draw_text(screen, f"Billetera: {coins} CR", 24, WIDTH // 2, HEIGHT // 2 - 20, color=(255, 215, 0))
         
         skin_name = next((s["name"] for s in CATALOGO if s["id"] == current_skin), "Desconocida")
         draw_text(screen, f"Nave Actual: {skin_name}", 20, WIDTH // 2, HEIGHT // 2 + 15, color=LIGHT_GREY)
@@ -320,6 +323,7 @@ async def lobby_screen(screen, clock, user, coins, current_skin):
         draw_text(screen, "[ ENTER ] Iniciar Misión", 24, WIDTH // 2, HEIGHT // 2 + 90, color=(100, 255, 100))
         draw_text(screen, "[ T ] Tienda / Locker", 24, WIDTH // 2, HEIGHT // 2 + 130, color=(163, 53, 238))
         draw_text(screen, "[ ESC ] Cerrar Sesión", 20, WIDTH // 2, HEIGHT // 2 + 190, color=RED)
+        draw_text(screen, "[ F11 ] Pantalla Completa", 16, WIDTH // 2, HEIGHT - 30, color=LIGHT_GREY)
 
         pygame.display.flip()
         clock.tick(FPS)
@@ -329,6 +333,7 @@ async def lobby_screen(screen, clock, user, coins, current_skin):
                 pygame.quit()
                 sys.exit()
             if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_F11: pygame.display.toggle_fullscreen()
                 if event.key == pygame.K_RETURN: return "PLAY"
                 if event.key == pygame.K_t: return "SHOP_LOCKER"
                 if event.key == pygame.K_ESCAPE: return "LOGOUT"
@@ -340,8 +345,7 @@ async def show_go_screen(screen, score, token):
     draw_text(screen, f"Puntuación: {score}", 22, WIDTH // 2, HEIGHT // 2)
     
     if token and score > 0:
-        # Ganancia dinámica: 10 pts = 1 moneda
-        draw_text(screen, f"Monedas ganadas: {math.floor(score / 10)} 🪙", 22, WIDTH // 2, HEIGHT // 2 + 40, color=(255, 215, 0))
+        draw_text(screen, f"+ {math.floor(score / 10)} CR", 26, WIDTH // 2, HEIGHT // 2 + 40, color=(255, 215, 0))
         draw_text(screen, "Guardando en TiDB Cloud...", 18, WIDTH // 2, HEIGHT * 3 // 4)
         pygame.display.flip()
         await auth.save_score(token, score)
@@ -372,6 +376,8 @@ async def show_go_screen(screen, score, token):
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_F11: pygame.display.toggle_fullscreen()
             if event.type == pygame.KEYUP and event.key == pygame.K_SPACE:
                 waiting = False
         await asyncio.sleep(0) 
@@ -427,7 +433,7 @@ class Player(pygame.sprite.Sprite):
 class Bullet(pygame.sprite.Sprite):
     def __init__(self, x, y):
         super().__init__()
-        self.image = laser_img
+        self.image = assets['laser']
         self.rect = self.image.get_rect()
         self.rect.bottom = y
         self.rect.centerx = x
@@ -533,8 +539,9 @@ class Enemy(pygame.sprite.Sprite):
 
 # --- ARQUITECTURA PRINCIPAL ASÍNCRONA ---
 async def main():
-    screen = pygame.display.set_mode((WIDTH, HEIGHT))
-    pygame.display.set_caption("Galaga - Proyecto Final Web")
+    # Se activan las banderas SCALED y RESIZABLE para ajuste automático de pantalla
+    screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.SCALED | pygame.RESIZABLE)
+    pygame.display.set_caption("Galaga SaaS - WebAssembly")
     clock = pygame.time.Clock()
     
     load_assets()
@@ -585,6 +592,8 @@ async def main():
 
                     for event in pygame.event.get():
                         if event.type == pygame.QUIT: sys.exit()
+                        if event.type == pygame.KEYDOWN:
+                            if event.key == pygame.K_F11: pygame.display.toggle_fullscreen()
 
                     all_sprites.update()
 
