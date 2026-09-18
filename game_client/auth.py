@@ -2,14 +2,12 @@ import sys
 import json
 import asyncio
 
-# URL de tu API en la nube (Render)
 URL_BASE = "https://galaga-api.onrender.com/api"
 
 async def make_request(endpoint, method="GET", payload=None, token=None):
     url = f"{URL_BASE}{endpoint}"
     
     if sys.platform != "emscripten":
-        # MODO ESCRITORIO
         import aiohttp
         headers = {}
         if token:
@@ -29,7 +27,6 @@ async def make_request(endpoint, method="GET", payload=None, token=None):
             print(f"Error local: {e}")
             return 500, None
     else:
-        # MODO WEB (WebAssembly / GitHub Pages)
         import platform
         import time
         req_id = str(int(time.time() * 1000))
@@ -64,43 +61,48 @@ async def make_request(endpoint, method="GET", payload=None, token=None):
             
         return status, data
 
-# --- FUNCIONES DE AUTENTICACIÓN ---
-
 async def register(username, password):
     if sys.platform == "emscripten":
-        print("🌐 Modo Web: Registro simulado exitoso.")
         return True, "Registro exitoso (Modo Web)"
-        
     status, data = await make_request("/register", "POST", payload={"username": username, "password": password})
-    if status == 201:
-        return True, "Cuenta creada. Presiona TAB para Login."
-    elif status == 400:
-        return False, "El usuario ya existe."
+    if status == 201: return True, "Cuenta creada. Presiona TAB para Login."
+    elif status == 400: return False, "El usuario ya existe."
     return False, "Error en el servidor."
 
 async def login(username, password):
     if sys.platform == "emscripten":
-        print("🌐 Modo Web: Acceso offline concedido.")
         return "token_simulado_web"
-        
     status, data = await make_request("/login", "POST", payload={"username": username, "password": password})
-    if status == 200 and data:
-        return data.get("token")
+    if status == 200 and data: return data.get("token")
     return None
 
 async def save_score(token, score):
-    if sys.platform == "emscripten":
-        print(f"🌐 Modo Web: Puntuación de {score} guardada en memoria.")
-        return True
-        
+    if sys.platform == "emscripten": return True
     status, _ = await make_request("/score", "POST", payload={"score": score}, token=token)
     return status == 201
 
 async def get_leaderboard():
     if sys.platform == "emscripten":
         return [{"username": "PilotoWeb", "score": 9999}]
-        
     status, data = await make_request("/leaderboard", "GET")
+    if status == 200 and data: return data
+    return []
+
+# --- NUEVAS FUNCIONES DE TIENDA Y PERFIL ---
+async def get_profile(token):
+    if sys.platform == "emscripten":
+        return {"username": "Invitado", "coins": 9999, "current_skin": "player_default"}
+    status, data = await make_request("/me", "GET", token=token)
     if status == 200 and data:
         return data
-    return []
+    return {"coins": 0, "current_skin": "player_default"}
+
+async def buy_skin(token, skin_name, cost):
+    if sys.platform == "emscripten":
+        return True, "Equipado (Modo Web)"
+    status, data = await make_request("/shop", "POST", payload={"skin_name": skin_name, "cost": cost}, token=token)
+    if status == 200:
+        return True, data.get("message", "Skin equipada.")
+    elif data and "error" in data:
+        return False, data["error"]
+    return False, "Error en transacción."
