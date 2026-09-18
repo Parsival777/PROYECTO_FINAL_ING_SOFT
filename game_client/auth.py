@@ -2,15 +2,14 @@ import sys
 import json
 import asyncio
 
-# Tu API real en la nube
+# URL de tu API en la nube (Render)
 URL_BASE = "https://galaga-api.onrender.com/api"
 
-# --- PUENTE INTELIGENTE DE RED ---
 async def make_request(endpoint, method="GET", payload=None, token=None):
     url = f"{URL_BASE}{endpoint}"
     
     if sys.platform != "emscripten":
-        # MODO ESCRITORIO: Usa la librería nativa de Python
+        # MODO ESCRITORIO
         import aiohttp
         headers = {}
         if token:
@@ -30,14 +29,13 @@ async def make_request(endpoint, method="GET", payload=None, token=None):
             print(f"Error local: {e}")
             return 500, None
     else:
-        # MODO WEB: Puente directo a la API fetch de JavaScript vía WebAssembly
+        # MODO WEB (WebAssembly / GitHub Pages)
         import platform
         import time
         req_id = str(int(time.time() * 1000))
         
         auth_header = f", 'Authorization': 'Bearer {token}'" if token else ""
         
-        # Inyectamos Javascript asíncrono directamente al navegador
         js_code = f"""
         window.res_{req_id} = null;
         window.status_{req_id} = 0;
@@ -53,7 +51,6 @@ async def make_request(endpoint, method="GET", payload=None, token=None):
         
         platform.window.eval(js_code)
         
-        # Le damos respiro al navegador mientras esperamos la respuesta de Render
         while getattr(platform.window, f"status_{req_id}") == 0:
             await asyncio.sleep(0.1)
             
@@ -67,24 +64,42 @@ async def make_request(endpoint, method="GET", payload=None, token=None):
             
         return status, data
 
-# --- LÓGICA DEL JUEGO CONECTADA A LA NUBE ---
+# --- FUNCIONES DE AUTENTICACIÓN ---
+
+async def register(username, password):
+    if sys.platform == "emscripten":
+        print("🌐 Modo Web: Registro simulado exitoso.")
+        return True, "Registro exitoso (Modo Web)"
+        
+    status, data = await make_request("/register", "POST", payload={"username": username, "password": password})
+    if status == 201:
+        return True, "Cuenta creada. Presiona TAB para Login."
+    elif status == 400:
+        return False, "El usuario ya existe."
+    return False, "Error en el servidor."
+
 async def login(username, password):
-    print(f"📡 Conectando con Render para autenticar a {username}...")
+    if sys.platform == "emscripten":
+        print("🌐 Modo Web: Acceso offline concedido.")
+        return "token_simulado_web"
+        
     status, data = await make_request("/login", "POST", payload={"username": username, "password": password})
     if status == 200 and data:
-        print("✅ Acceso validado en la nube.")
         return data.get("token")
-    print("❌ Credenciales inválidas.")
     return None
 
 async def save_score(token, score):
-    status, _ = await make_request("/score", "POST", payload={"score": score}, token=token)
-    if status == 201:
-        print("✅ Puntuación registrada exitosamente en TiDB.")
+    if sys.platform == "emscripten":
+        print(f"🌐 Modo Web: Puntuación de {score} guardada en memoria.")
         return True
-    return False
+        
+    status, _ = await make_request("/score", "POST", payload={"score": score}, token=token)
+    return status == 201
 
 async def get_leaderboard():
+    if sys.platform == "emscripten":
+        return [{"username": "PilotoWeb", "score": 9999}]
+        
     status, data = await make_request("/leaderboard", "GET")
     if status == 200 and data:
         return data

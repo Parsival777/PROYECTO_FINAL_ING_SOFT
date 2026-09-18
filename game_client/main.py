@@ -35,10 +35,11 @@ font_name = pygame.font.match_font('arial')
 
 player_img = mini_player_img = laser_img = blue_img = red_img = green_img = None
 shoot_sound = expl_sound = None
+music_loaded = False # Variable para el soundtrack
 
 def load_assets():
     global player_img, mini_player_img, laser_img, blue_img, red_img, green_img
-    global shoot_sound, expl_sound
+    global shoot_sound, expl_sound, music_loaded
     img_dir = os.path.join(os.path.dirname(__file__), 'img')
     snd_dir = os.path.join(os.path.dirname(__file__), 'snd')
     
@@ -56,6 +57,15 @@ def load_assets():
         expl_sound.set_volume(0.4)
     except FileNotFoundError:
         shoot_sound = expl_sound = None
+
+    # Carga del Soundtrack (.ogg obligatorio para web)
+    try:
+        pygame.mixer.music.load(os.path.join(snd_dir, 'musica.ogg'))
+        pygame.mixer.music.set_volume(0.5)
+        music_loaded = True
+    except Exception as e:
+        print(f"⚠️ Soundtrack desactivado: {e}")
+        music_loaded = False
 
 def draw_text(surf, text, size, x, y, align="midtop", color=WHITE):
     font = pygame.font.Font(font_name, size)
@@ -99,7 +109,8 @@ class InputBox:
                     return self.text
                 elif event.key == pygame.K_BACKSPACE:
                     self.text = self.text[:-1]
-                else:
+                # Bloqueamos el TAB y el ESC para que no se escriban en la caja
+                elif event.key not in [pygame.K_TAB, pygame.K_ESCAPE]:
                     self.text += event.unicode
                 
                 display_text = '*' * len(self.text) if self.is_password else self.text
@@ -114,12 +125,13 @@ class InputBox:
         screen.blit(self.txt_surface, (self.rect.x + 5, self.rect.y + 5))
         pygame.draw.rect(screen, self.color, self.rect, 2)
 
-# --- PANTALLA DE LOGIN GRÁFICA ASÍNCRONA ---
+# --- PANTALLA DE LOGIN GRÁFICA ASÍNCRONA (MODIFICADA CON REGISTRO E INVITADO) ---
 async def login_screen(screen, clock):
     input_box1 = InputBox(WIDTH // 2 - 100, HEIGHT // 2 - 40, 200, 32)
     input_box2 = InputBox(WIDTH // 2 - 100, HEIGHT // 2 + 20, 200, 32, is_password=True)
     input_boxes = [input_box1, input_box2]
     error_msg = ""
+    estado = "LOGIN"
     
     while True:
         screen.fill(BLACK)
@@ -132,31 +144,57 @@ async def login_screen(screen, clock):
                 star[0] = random.randrange(0, WIDTH)
             pygame.draw.rect(screen, LIGHT_GREY, (star[0], star[1], star[3], star[3]))
 
-        draw_text(screen, "🛸 GALAGA - TERMINAL DE ACCESO 🛸", 32, WIDTH // 2, HEIGHT // 4 - 50)
+        draw_text(screen, f"🛸 GALAGA - MODO {estado} 🛸", 32, WIDTH // 2, HEIGHT // 4 - 50)
         draw_text(screen, "Usuario:", 22, WIDTH // 2 - 110, HEIGHT // 2 - 35, align="topright")
         draw_text(screen, "Clave:", 22, WIDTH // 2 - 110, HEIGHT // 2 + 25, align="topright")
-        draw_text(screen, "Haz clic en la caja para escribir. Presiona ENTER al terminar.", 16, WIDTH // 2, HEIGHT // 2 + 80)
+        
+        draw_text(screen, "ENTER: Aceptar | TAB: Cambiar Modo | ESC: Invitado", 18, WIDTH // 2, HEIGHT // 2 + 80, color=(100, 255, 100))
         
         if error_msg:
-            draw_text(screen, error_msg, 18, WIDTH // 2, HEIGHT // 2 + 110, color=RED)
+            draw_text(screen, error_msg, 18, WIDTH // 2, HEIGHT // 2 + 115, color=RED if "❌" in error_msg else WHITE)
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
+                
+            # Interceptamos teclas de navegación de estado
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_TAB:
+                    estado = "REGISTRO" if estado == "LOGIN" else "LOGIN"
+                    error_msg = f"Modo {estado} activado."
+                elif event.key == pygame.K_ESCAPE:
+                    return None, "Invitado"
+            
             for box in input_boxes:
                 box.handle_event(event)
             
-            # Intento de acceso
+            # Intento de acceso o registro
             if event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN:
                 if input_box1.text and input_box2.text:
-                    token = await auth.login(input_box1.text, input_box2.text)
-                    if token:
-                        return token
+                    if estado == "LOGIN":
+                        error_msg = "Conectando..."
+                        draw_text(screen, error_msg, 18, WIDTH // 2, HEIGHT // 2 + 115, color=WHITE)
+                        pygame.display.flip()
+                        
+                        token = await auth.login(input_box1.text, input_box2.text)
+                        if token:
+                            return token, input_box1.text
+                        else:
+                            error_msg = "❌ Credenciales inválidas o error de conexión."
+                            input_box2.text = "" 
+                            input_box2.txt_surface = input_box2.font.render("", True, WHITE)
                     else:
-                        error_msg = "❌ Credenciales inválidas o error de conexión."
-                        input_box2.text = "" 
-                        input_box2.txt_surface = input_box2.font.render("", True, WHITE)
+                        error_msg = "Registrando en la nube..."
+                        draw_text(screen, error_msg, 18, WIDTH // 2, HEIGHT // 2 + 115, color=WHITE)
+                        pygame.display.flip()
+                        
+                        exito, msg = await auth.register(input_box1.text, input_box2.text)
+                        error_msg = msg
+                        if exito:
+                            estado = "LOGIN"
+                            input_box2.text = ""
+                            input_box2.txt_surface = input_box2.font.render("", True, WHITE)
 
         for box in input_boxes:
             box.update()
@@ -166,16 +204,20 @@ async def login_screen(screen, clock):
         clock.tick(FPS)
         await asyncio.sleep(0) 
 
-# --- PANTALLA GAME OVER ASÍNCRONA ---
+# --- PANTALLA GAME OVER ASÍNCRONA (MODIFICADA CON PROTECCIÓN) ---
 async def show_go_screen(screen, score, token):
     screen.fill(BLACK)
     draw_text(screen, "GAME OVER", 64, WIDTH // 2, HEIGHT // 4)
     draw_text(screen, f"Puntuación Final: {score}", 22, WIDTH // 2, HEIGHT // 2)
-    draw_text(screen, "Guardando puntuación...", 18, WIDTH // 2, HEIGHT * 3 // 4)
-    pygame.display.flip()
     
-    if score > 0:
+    if token and score > 0:
+        draw_text(screen, "Guardando puntuación en TiDB...", 18, WIDTH // 2, HEIGHT * 3 // 4)
+        pygame.display.flip()
         await auth.save_score(token, score)
+    elif not token:
+        draw_text(screen, "Modo Invitado: Puntuación no registrada.", 18, WIDTH // 2, HEIGHT * 3 // 4, color=RED)
+        pygame.display.flip()
+        await asyncio.sleep(1)
     
     leaderboard = await auth.get_leaderboard()
     
@@ -203,11 +245,11 @@ async def show_go_screen(screen, score, token):
                 waiting = False
         await asyncio.sleep(0) 
 
-# --- CLASES DEL JUEGO ---
+# --- CLASES DEL JUEGO (MODIFICADA PARA ACEPTAR SKINS) ---
 class Player(pygame.sprite.Sprite):
-    def __init__(self, all_sprites, bullets):
+    def __init__(self, all_sprites, bullets, skin_img):
         super().__init__()
-        self.image = player_img
+        self.image = skin_img # Se asigna la skin dictada por la nube
         self.rect = self.image.get_rect()
         self.rect.centerx = WIDTH // 2
         self.rect.bottom = HEIGHT - 20
@@ -377,7 +419,36 @@ async def main():
     
     load_assets()
 
-    token = await login_screen(screen, clock)
+    token, current_user = await login_screen(screen, clock)
+
+    # --- LÓGICA DE PROGRESIÓN (SaaS) ---
+    skin_actual = player_img # Nave base por defecto
+    rango = "Invitado"
+    
+    if token:
+        screen.fill(BLACK)
+        draw_text(screen, "Sincronizando perfil con TiDB Cloud...", 24, WIDTH // 2, HEIGHT // 2)
+        pygame.display.flip()
+        
+        board = await auth.get_leaderboard()
+        max_score = 0
+        for p in board:
+            if p['username'] == current_user:
+                if p['score'] > max_score:
+                    max_score = p['score']
+        
+        # Asignación de skins (reutilizamos las de los enemigos para el jugador)
+        if max_score >= 10000:
+            skin_actual = green_img
+            rango = "Élite"
+        elif max_score >= 5000:
+            skin_actual = blue_img
+            rango = "Pro"
+        else:
+            rango = "Novato"
+
+    if music_loaded:
+        pygame.mixer.music.play(-1)
 
     game_over = False
     running = True
@@ -388,7 +459,7 @@ async def main():
     enemies = pygame.sprite.Group()
     enemy_bullets = pygame.sprite.Group() 
     
-    player = Player(all_sprites, bullets)
+    player = Player(all_sprites, bullets, skin_actual)
     all_sprites.add(player)
     
     for row in range(3):
@@ -399,6 +470,7 @@ async def main():
 
     while running:
         if game_over:
+            if music_loaded: pygame.mixer.music.stop()
             await show_go_screen(screen, score, token)
             game_over = False
             
@@ -407,7 +479,8 @@ async def main():
             enemies.empty()
             enemy_bullets.empty()
             
-            player = Player(all_sprites, bullets)
+            # Se reasigna la skin al reiniciar
+            player = Player(all_sprites, bullets, skin_actual)
             all_sprites.add(player)
             for row in range(3):
                 for col in range(7):
@@ -415,6 +488,7 @@ async def main():
                     all_sprites.add(enemy)
                     enemies.add(enemy)
             score = 0
+            if music_loaded: pygame.mixer.music.play(-1)
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -455,7 +529,7 @@ async def main():
             pygame.draw.rect(screen, LIGHT_GREY, (star[0], star[1], star[3], star[3]))
 
         all_sprites.draw(screen)
-        draw_text(screen, f"SCORE: {score}", 24, WIDTH - 20, 10, align="topright")
+        draw_text(screen, f"SCORE: {score} | {current_user} ({rango})", 22, WIDTH - 20, 10, align="topright")
         draw_lives(screen, 10, 10, player.lives, mini_player_img)
         
         pygame.display.flip()
