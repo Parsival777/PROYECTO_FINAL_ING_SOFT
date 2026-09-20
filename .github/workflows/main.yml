@@ -24,5 +24,5 @@ jobs:
     steps:
     - name: Desplegar en Render
       env:
-        deploy_url: ${{ secrets.RENDER_DEPLOY_HOOK }}
+        deploy_url: "https://api.render.com/deploy/srv-damqbujncjis73cf78b0?key=bp4yhEO8UeE"
       run: curl "$deploy_url"
