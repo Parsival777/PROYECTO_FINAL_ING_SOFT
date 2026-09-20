@@ -1,0 +1,28 @@
+name: CI/CD Pipeline Galaga SaaS
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Configurar Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18.x'
+    - name: Instalar dependencias
+      run: npm install
+    - name: Ejecutar pruebas
+      run: npm test
+
+  deploy:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    steps:
+    - name: Desplegar en Render
+      env:
+        deploy_url: ${{ secrets.RENDER_DEPLOY_HOOK }}
+      run: curl "$deploy_url"

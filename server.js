@@ -3,6 +3,7 @@ const cors = require('cors');
 const mysql = require('mysql2/promise');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const path = require('path');
 require('dotenv').config();
 
 const app = express();
@@ -10,6 +11,9 @@ const PORT = process.env.PORT || 3000;
 
 app.use(cors()); 
 app.use(express.json());
+
+// Servir el frontend web
+app.use(express.static(path.join(__dirname, 'public')));
 
 const dbConfig = {
     host: process.env.DB_HOST,
@@ -52,7 +56,7 @@ app.post('/api/login', async (req, res) => {
         if (rows.length === 0) return res.status(401).json({ error: 'Usuario no encontrado.' });
         const validPassword = await bcrypt.compare(password, rows[0].password);
         if (!validPassword) return res.status(401).json({ error: 'Contraseña incorrecta.' });
-        const token = jwt.sign({ id: rows[0].id, username: rows[0].username }, process.env.JWT_SECRET || 'secreto_super_seguro_galaga', { expiresIn: '24h' });
+        const token = jwt.sign({ id: rows[0].id, username: rows[0].username, role: rows[0].role || 'usuario' }, process.env.JWT_SECRET || 'secreto_super_seguro_galaga', { expiresIn: '24h' });
         res.status(200).json({ token, message: 'Autenticación exitosa.' });
     } catch (error) {
         res.status(500).json({ error: 'Error interno.' });
@@ -124,4 +128,13 @@ app.get('/api/leaderboard', async (req, res) => {
     }
 });
 
-app.listen(PORT, () => console.log(`🚀 API Server en puerto ${PORT}`));
+// Ruta comodín para cargar tu página web
+app.get(/.*/, (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// Exportación condicional para Jest
+if (require.main === module) {
+    app.listen(PORT, () => console.log(`🚀 API y Servidor Web funcionando en el puerto ${PORT}`));
+}
+module.exports = app;
