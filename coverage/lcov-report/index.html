@@ -3,176 +3,121 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Galaga Web SaaS</title>
+    <title>Galaga SaaS - Full Stack</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         
-        body {
-            margin: 0;
-            padding: 0;
-            background-color: #050510;
-            color: #fff;
-            font-family: 'Press Start 2P', cursive;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            overflow: hidden;
-        }
-
-        /* Estilos de las Interfaces de Usuario */
-        .screen {
-            display: none;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            background: rgba(0, 0, 0, 0.85);
-            border: 2px solid #00ffff;
-            padding: 40px;
-            border-radius: 10px;
-            box-shadow: 0 0 20px #00ffff;
-            text-align: center;
-            max-width: 800px;
-            width: 100%;
-        }
-        .screen.active {
-            display: flex;
-        }
-
-        h1, h2, h3 { color: #00ffff; text-shadow: 2px 2px #0000ff; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Press Start 2P', cursive; }
+        body { background-color: #050510; color: white; overflow: hidden; display: flex; justify-content: center; align-items: center; height: 100vh; }
         
-        input {
-            margin: 10px 0;
-            padding: 15px;
-            width: 250px;
-            background: #000;
-            border: 2px solid #00ffff;
-            color: #00ffff;
-            font-family: 'Press Start 2P', cursive;
-            font-size: 12px;
-            text-align: center;
-        }
-
-        button {
-            margin: 10px 5px;
-            padding: 15px 20px;
-            background: #000;
-            border: 2px solid #00ffff;
-            color: #00ffff;
-            font-family: 'Press Start 2P', cursive;
-            font-size: 12px;
-            cursor: pointer;
-            transition: 0.3s;
-        }
-        button:hover { background: #00ffff; color: #000; }
-        button.btn-alt { border-color: #ff00ff; color: #ff00ff; }
-        button.btn-alt:hover { background: #ff00ff; color: #000; }
-        button.btn-danger { border-color: #ff0000; color: #ff0000; }
-        button.btn-danger:hover { background: #ff0000; color: #000; }
-
-        /* Estilos de la Tienda */
-        #shop-container {
-            display: flex;
-            gap: 20px;
-            margin-top: 20px;
-            flex-wrap: wrap;
-            justify-content: center;
-        }
-        .card {
-            background: #111;
-            border: 2px solid #555;
-            padding: 20px;
-            border-radius: 10px;
-            width: 200px;
-            text-align: center;
-        }
-        .card img { width: 80px; height: 80px; image-rendering: pixelated; margin-bottom: 10px; }
-        .card.common { border-color: #aaaaaa; }
-        .card.epic { border-color: #aa00ff; box-shadow: 0 0 10px #aa00ff; }
-        .card.legendary { border-color: #ffaa00; box-shadow: 0 0 15px #ffaa00; }
-        .card.equipped { border-color: #00ff00; box-shadow: 0 0 20px #00ff00; }
-
-        /* Contenedor del Juego y HUD */
-        #game-wrapper {
-            display: none;
-            position: relative;
-            width: 800px;
-            height: 600px;
-            border: 2px solid #555;
-            background: #000;
-            box-shadow: 0 0 15px rgba(255, 255, 255, 0.1);
-        }
-        #hud {
-            position: absolute;
-            top: 15px;
-            left: 20px;
-            right: 20px;
-            display: flex;
-            justify-content: space-between;
-            z-index: 5;
-            pointer-events: none;
-            font-size: 16px;
-            text-shadow: 2px 2px #000;
-        }
-        #lives-container { display: flex; gap: 5px; align-items: center; }
-        canvas { display: block; }
+        .screen { display: none; flex-direction: column; align-items: center; justify-content: center; width: 100%; height: 100%; position: absolute; top: 0; left: 0; background: radial-gradient(circle, #1a1a2e 0%, #000000 100%); z-index: 10; }
+        .active { display: flex; }
+        
+        h1 { color: #00ffff; text-shadow: 0 0 10px #00ffff; margin-bottom: 30px; text-align: center; font-size: 24px; line-height: 1.5; }
+        h2 { color: #ffd700; margin-bottom: 20px; font-size: 16px; }
+        p { margin-bottom: 15px; font-size: 12px; line-height: 1.5; text-align: center; }
+        
+        .form-group { margin-bottom: 20px; text-align: center; }
+        input { background: #000; border: 2px solid #00ffff; color: #fff; padding: 15px; font-size: 14px; width: 300px; text-align: center; outline: none; margin-bottom: 10px; font-family: inherit; }
+        input:focus { border-color: #ff00ff; box-shadow: 0 0 15px #ff00ff; }
+        
+        button { background: transparent; border: 2px solid #00ff00; color: #00ff00; padding: 15px 30px; cursor: pointer; font-size: 14px; text-transform: uppercase; margin: 10px; transition: 0.3s; font-family: inherit; }
+        button:hover { background: #00ff00; color: #000; box-shadow: 0 0 15px #00ff00; }
+        .btn-alt { border-color: #ff00ff; color: #ff00ff; }
+        .btn-alt:hover { background: #ff00ff; color: #000; box-shadow: 0 0 15px #ff00ff; }
+        .btn-danger { border-color: #ff0000; color: #ff0000; }
+        .btn-danger:hover { background: #ff0000; color: #fff; box-shadow: 0 0 15px #ff0000; }
+        
+        .error { color: #ff0000; min-height: 20px; margin-top: 10px; }
+        
+        /* Tienda Grid */
+        .shop-grid { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; max-width: 900px; }
+        .card { background: #111; border: 3px solid #555; padding: 20px; text-align: center; width: 250px; border-radius: 10px; transition: 0.3s; }
+        .card img { width: 80px; height: 80px; image-rendering: pixelated; margin-bottom: 15px; }
+        .card.common { border-color: #999; }
+        .card.epic { border-color: #a335ee; box-shadow: 0 0 15px #a335ee; }
+        .card.legendary { border-color: #ff8000; box-shadow: 0 0 15px #ff8000; }
+        .card.equipped { background: #222; border-color: #00ff00; box-shadow: 0 0 20px #00ff00; }
+        
+        /* Se eliminó el display:none para permitir que game-wrapper lo controle */
+        canvas { background: #000; z-index: 1; image-rendering: pixelated; }
+        
+        /* HUD del juego adaptado al contenedor unificado */
+        .lives { display: flex; gap: 10px; }
+        .lives img { width: 25px; height: 25px; }
     </style>
 </head>
 <body>
 
-    <!-- PANTALLA 1: AUTENTICACIÓN -->
+    <!-- PANTALLA LOGIN / REGISTRO -->
     <div id="auth-screen" class="screen active">
-        <h1>GALAGA ONLINE</h1>
-        <p>Ingresa tus coordenadas, piloto</p>
-        <input type="text" id="username" placeholder="Usuario">
-        <input type="password" id="password" placeholder="Contraseña">
+        <h1 id="auth-title">🛸 GALAGA SAAS 🛸<br>TERMINAL DE ACCESO</h1>
+        <div class="form-group">
+            <input type="text" id="username" placeholder="Piloto" autocomplete="off"><br>
+            <input type="password" id="password" placeholder="Contraseña">
+        </div>
         <div>
             <button id="btn-login">Iniciar Sesión</button>
             <button id="btn-register" class="btn-alt">Registrarse</button>
         </div>
-        <button id="btn-guest">Jugar como Invitado</button>
-        <p id="auth-msg"></p>
+        <button id="btn-guest" class="btn-danger" style="margin-top: 30px; font-size: 10px;">Entrar como Invitado</button>
+        <p id="auth-msg" class="error"></p>
     </div>
 
-    <!-- PANTALLA 2: LOBBY -->
+    <!-- PANTALLA LOBBY -->
     <div id="lobby-screen" class="screen">
-        <h2>LOBBY PRINCIPAL</h2>
-        <p id="lobby-user">Piloto: ---</p>
-        <p id="lobby-coins">Billetera: --- 🪙</p>
-        <p id="lobby-skin">Nave Actual: ---</p>
-        <button id="btn-play">🕹️ DESPEGAR</button>
-        <button id="btn-shop" class="btn-alt">🛒 TIENDA / LOCKER</button>
-        <button id="btn-logout" class="btn-danger">Cerrar Sesión</button>
+        <h1>--- LOBBY DE PILOTOS ---</h1>
+        <h2 id="lobby-user">Piloto: ---</h2>
+        <h2 id="lobby-coins" style="color:#ffd700;">Billetera: 0 🪙</h2>
+        <p id="lobby-skin" style="color:#aaa;">Nave Actual: ---</p>
+        
+        <div style="margin-top: 40px; display: flex; flex-direction: column; gap: 15px;">
+            <button id="btn-play">Iniciar Misión</button>
+            <button id="btn-shop" class="btn-alt">Tienda y Locker</button>
+            <button id="btn-logout" class="btn-danger">Cerrar Sesión</button>
+        </div>
     </div>
 
-    <!-- PANTALLA 3: TIENDA / LOCKER -->
+    <!-- PANTALLA TIENDA / LOCKER -->
     <div id="shop-screen" class="screen">
-        <h2 id="shop-title">🏪 TIENDA INTERGALÁCTICA 🏪</h2>
-        <p id="shop-coins">Tus Monedas: --- 🪙</p>
-        <button id="btn-toggle-shop" class="btn-alt">Ir al Locker</button>
-        <div id="shop-container"></div>
-        <p id="shop-msg"></p>
-        <button id="btn-back-lobby">Volver al Lobby</button>
+        <h1 id="shop-title">🏪 TIENDA INTERGALÁCTICA 🏪</h1>
+        <h2 id="shop-coins" style="color:#ffd700;">Tus Monedas: 0 🪙</h2>
+        
+        <div class="shop-grid" id="shop-container">
+            <!-- Las tarjetas se generan por JS -->
+        </div>
+        
+        <div style="margin-top: 40px;">
+            <button id="btn-toggle-shop" class="btn-alt">Ir al Locker</button>
+            <button id="btn-back-lobby" class="btn-danger">Volver al Lobby</button>
+        </div>
+        <p id="shop-msg" class="error" style="color:#ffff00;"></p>
     </div>
 
-    <!-- PANTALLA 4: GAME OVER Y LEADERBOARD -->
+    <!-- PANTALLA GAME OVER -->
     <div id="gameover-screen" class="screen">
-        <h2 style="color: #ff0000;">GAME OVER</h2>
-        <p id="go-score">Puntuación: 0</p>
-        <p id="go-coins" style="color: #00ff00;">+ 0 🪙</p>
-        <h3>TOP PILOTOS</h3>
-        <div id="leaderboard-list" style="font-size: 12px; text-align: left; margin: 20px auto; width: 300px; line-height: 1.8;"></div>
-        <button id="btn-return-lobby">Volver al Menú</button>
+        <h1 style="color: #ff0000; font-size: 40px;">GAME OVER</h1>
+        <h2 id="go-score">Puntuación: 0</h2>
+        <h2 id="go-coins" style="color:#ffd700; margin-bottom: 40px;">+ 0 🪙</h2>
+        
+        <div id="leaderboard-container" style="margin-bottom: 30px; text-align: left;">
+            <p style="color: #00ffff; text-align: center; margin-bottom: 20px;">--- TOP PILOTOS ---</p>
+            <div id="leaderboard-list"></div>
+        </div>
+        
+        <button id="btn-return-lobby">Volver al Lobby</button>
     </div>
 
     <!-- CONTENEDOR DEL JUEGO UNIFICADO -->
-    <div id="game-wrapper">
-        <!-- HUD ANCLADO AL CANVAS -->
-        <div id="hud">
+    <div id="game-wrapper" style="display: none; position: relative; width: 800px; height: 600px; margin: 0 auto; box-shadow: 0 0 20px rgba(0, 255, 255, 0.2); border: 2px solid #555;">
+        
+        <!-- HUD ANCLADO AL LIENZO -->
+        <div id="hud" style="position: absolute; top: 15px; left: 20px; right: 20px; display: none; justify-content: space-between; z-index: 5; pointer-events: none;">
             <div class="lives" id="lives-container"></div>
-            <div id="score-display">SCORE: 0</div>
+            <div id="score-display" style="font-size: 16px; text-shadow: 2px 2px #000;">SCORE: 0</div>
         </div>
-        <canvas id="gameCanvas" width="800" height="600"></canvas>
+
+        <canvas id="gameCanvas" width="800" height="600" style="display: block; width: 100%; height: 100%;"></canvas>
     </div>
 
     <script src="app.js"></script>

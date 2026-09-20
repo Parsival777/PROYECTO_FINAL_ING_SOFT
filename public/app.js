@@ -8,7 +8,7 @@ let shopMode = "SHOP";
 
 const CATALOG = [
     { id: "player_default", name: "Nave Base", price: 0, rarity: "common", src: "img/main_ship.png" },
-    { id: "skin_stealth", name: "Caza Furtivo", price: 1500, rarity: "epic", src: "img/skin_stealh.png" },
+    { id: "skin_stealth", name: "Caza Furtivo", price: 1500, rarity: "epic", src: "img/skin_stealth.png" },
     { id: "skin_neon", name: "Neón Cósmico", price: 3000, rarity: "legendary", src: "img/skin_neon.png" }
 ];
 
@@ -149,15 +149,15 @@ async function handleItemClick(id, price) {
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 
-// Carga de imágenes corregida con los nombres reales de tus archivos
 const imagePaths = {
     'player_default': 'img/main_ship.png',
-    'skin_stealth': 'img/skin_stealh.png', // Usará main_ship temporalmente si la compras
-    'skin_neon': 'img/skin_neon.png',    // Usará main_ship temporalmente si la compras
+    'skin_stealth': 'img/skin_stealth.png', 
+    'skin_neon': 'img/skin_neon.png',    
     'laser': 'img/laser.png',
     'red_ship': 'img/red_ship.png',
     'blue_ship': 'img/blue_ship.png',
-    'green_ship': 'img/green_ship.png'
+    'green_ship': 'img/green_ship.png',
+    'heart': 'img/heart.png'
 };
 
 const images = {};
@@ -185,11 +185,10 @@ class Player {
     }
     draw() {
         if(!this.hidden) {
-            // Verificación profunda para evitar que colapse si la imagen aún carga
             if (images[this.imgName] && images[this.imgName].complete && images[this.imgName].naturalWidth > 0) {
                 ctx.drawImage(images[this.imgName], this.x, this.y, this.w, this.h);
             } else {
-                ctx.fillStyle = "#00ffff"; // Respaldo visual temporal
+                ctx.fillStyle = "#00ffff"; 
                 ctx.fillRect(this.x, this.y, this.w, this.h);
             }
         }
@@ -303,7 +302,7 @@ document.getElementById("btn-play").onclick = () => {
     }));
 
     gameActive = true;
-    lastTime = performance.now(); // Reinicia el contador de tiempo al jugar
+    lastTime = performance.now(); 
     sndMusic.play().catch(()=>{});
     gameLoop();
 };
@@ -315,9 +314,15 @@ function checkCollision(r1, r2) {
 function updateHUD() {
     document.getElementById("score-display").innerText = `SCORE: ${score}`;
     const lc = document.getElementById("lives-container");
-    // Corrección para usar un emoji nativo si no hay archivo de imagen de corazón
-    lc.innerHTML = "❤️".repeat(Math.max(0, player.lives));
-    lc.style.fontSize = "20px";
+    lc.innerHTML = "";
+    for(let i=0; i<player.lives; i++) {
+        if(images['heart'] && images['heart'].complete && images['heart'].naturalWidth > 0) {
+            const heartImg = images['heart'].cloneNode();
+            heartImg.style.width = "25px";
+            heartImg.style.height = "25px";
+            lc.appendChild(heartImg);
+        }
+    }
 }
 
 // Bucle bloqueado a 60 FPS
@@ -329,7 +334,6 @@ function gameLoop(timestamp) {
     if (!timestamp) timestamp = performance.now();
     const elapsed = timestamp - lastTime;
     
-    // Solo actualiza y dibuja si ha pasado el tiempo necesario para 1 frame (60 FPS)
     if (elapsed > fpsInterval) {
         lastTime = timestamp - (elapsed % fpsInterval);
         
