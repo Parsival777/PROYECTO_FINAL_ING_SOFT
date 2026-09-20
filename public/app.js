@@ -182,7 +182,7 @@ for (let key in imagePaths) {
     images[key].src = imagePaths[key];
 }
 
-const sndShoot = new Audio('snd/laser.wav'); sndShoot.volume = 0.3;
+const sndShoot = new Audio('snd/laserShoot.wav'); sndShoot.volume = 0.3;
 const sndExpl = new Audio('snd/explosion.wav'); sndExpl.volume = 0.4;
 
 let gameLoopId, gameActive = false;
