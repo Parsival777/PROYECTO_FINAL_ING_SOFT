@@ -30,9 +30,10 @@ async function loadProfile() {
     if (!state.token) return;
     const res = await apiCall("/me");
     if (res.status === 200) {
-        state.coins = res.data.coins;
-        state.currentSkin = res.data.current_skin;
-        state.ownedSkins = res.data.owned_skins.split(',');
+        // Validaciones agregadas para evitar nulls
+        state.coins = res.data.coins || 0;
+        state.currentSkin = res.data.current_skin || "player_default";
+        state.ownedSkins = res.data.owned_skins ? res.data.owned_skins.split(',') : ["player_default"];
     }
 }
 
@@ -168,10 +169,11 @@ class Player {
         this.x = canvas.width/2 - this.w/2; this.y = canvas.height - this.h - 10;
         this.speed = 6; this.lives = 3; this.hidden = false; this.hideTime = 0;
         this.lastShot = 0;
-        this.imgName = skinId;
+        this.imgName = skinId || 'player_default'; // Validación añadida
     }
     draw() {
-        if(!this.hidden && images[this.imgName].complete) {
+        // Validación de existencia de imagen para evitar crash
+        if(!this.hidden && images[this.imgName] && images[this.imgName].complete) {
             ctx.drawImage(images[this.imgName], this.x, this.y, this.w, this.h);
         }
     }
