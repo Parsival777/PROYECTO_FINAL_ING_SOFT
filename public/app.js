@@ -38,8 +38,8 @@ async function loadProfile() {
 const screens = ["auth-screen", "lobby-screen", "shop-screen", "gameover-screen"];
 function showScreen(id) {
     screens.forEach(s => document.getElementById(s).classList.remove("active"));
-    const wrapper = document.getElementById("game-wrapper");
-    if(wrapper) wrapper.style.display = "none";
+    const gameLayer = document.getElementById("game-layer");
+    if(gameLayer) gameLayer.style.display = "none";
     if(id) document.getElementById(id).classList.add("active");
 }
 
@@ -173,7 +173,7 @@ const sndMusic = new Audio('snd/musica.ogg'); sndMusic.loop = true; sndMusic.vol
 let gameLoopId, gameActive = false;
 let player, bullets, enemies, enemyBullets, starsArr, score;
 let lastTime = 0;
-const fpsInterval = 1000 / 60; // Bloqueo estricto a 60 FPS
+const fpsInterval = 1000 / 60; 
 
 class Player {
     constructor(skinId) {
@@ -286,11 +286,8 @@ window.addEventListener('keyup', e => keys[e.key] = false);
 
 document.getElementById("btn-play").onclick = () => {
     showScreen(null); 
-    const wrapper = document.getElementById("game-wrapper");
-    if(wrapper) wrapper.style.display = "block";
-    
-    const hud = document.getElementById("hud");
-    if(hud) hud.style.display = "flex";
+    const gameLayer = document.getElementById("game-layer");
+    if(gameLayer) gameLayer.style.display = "block";
     
     player = new Player(state.currentSkin);
     bullets = []; enemies = []; enemyBullets = []; score = 0;
