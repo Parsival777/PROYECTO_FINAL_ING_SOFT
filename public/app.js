@@ -3,7 +3,6 @@ let state = {
     token: null, user: "Invitado", coins: 0, 
     currentSkin: "player_default", ownedSkins: ["player_default"]
 };
-let shopMode = "SHOP"; 
 
 const CATALOG = [
     { id: "player_default", name: "Nave Base", price: 0, rarity: "common", src: "img/main_ship.png" },
@@ -89,15 +88,14 @@ async function enterLobby() {
     showScreen("lobby-screen");
 }
 
-document.getElementById("btn-shop").onclick = () => renderShop("SHOP");
+document.getElementById("btn-shop").onclick = () => renderShop();
 document.getElementById("btn-back-lobby").onclick = enterLobby;
 
-async function renderShop(mode) {
-    shopMode = mode;
+// Lógica de Tienda y Locker unificada
+async function renderShop() {
     showScreen("shop-screen");
-    document.getElementById("shop-title").innerText = mode === "SHOP" ? "🏪 TIENDA INTERGALÁCTICA 🏪" : "🗄️ TU LOCKER 🗄️";
+    document.getElementById("shop-title").innerText = "🏪 TIENDA Y LOCKER 🏪";
     document.getElementById("shop-coins").innerText = `Tus Monedas: ${state.coins} 🪙`;
-    document.getElementById("btn-toggle-shop").innerText = mode === "SHOP" ? "Ir al Locker" : "Ir a la Tienda";
     msg("shop-msg", "");
 
     const container = document.getElementById("shop-container");
@@ -108,47 +106,61 @@ async function renderShop(mode) {
         const owned = state.ownedSkins.includes(item.id);
         const equipped = state.currentSkin === item.id;
 
-        if (mode === "SHOP") {
-            if (owned) { status = "COMPRADO"; actionText = "En Propiedad"; btnClass = "btn-alt"; disabled = true; }
-            else { status = `${item.price} 🪙`; actionText = "Comprar"; }
-        } else {
-            if (equipped) { status = "EQUIPADO"; actionText = "En Uso"; btnClass = "btn-alt"; disabled = true; }
-            else if (owned) { status = "DISPONIBLE"; actionText = "Equipar"; }
-            else { status = "BLOQUEADO"; actionText = "Ir a Tienda"; btnClass = "btn-danger"; disabled = true; }
+        if (equipped) { 
+            status = "EQUIPADO"; 
+            actionText = "En Uso"; 
+            btnClass = "btn-alt"; 
+            disabled = true; 
+        } else if (owned) { 
+            status = "DISPONIBLE"; 
+            actionText = "Equipar"; 
+            btnClass = "btn-alt"; 
+        } else { 
+            status = `${item.price} 🪙`; 
+            actionText = "Comprar"; 
         }
 
         const card = document.createElement("div");
-        card.className = `card ${item.rarity} ${equipped && mode === "LOCKER" ? 'equipped' : ''}`;
+        card.className = `card ${item.rarity} ${equipped ? 'equipped' : ''}`;
         card.innerHTML = `
             <img src="${item.src}" alt="${item.name}">
             <h3 style="margin-bottom:10px; font-size:14px;">${item.name}</h3>
             <p style="margin-bottom:15px; color:#fff;">${status}</p>
             <button class="${btnClass}" ${disabled ? "disabled style='opacity:0.5; cursor:not-allowed;'" : ""} 
-                onclick="handleItemClick('${item.id}', ${item.price})">${actionText}</button>
+                onclick="handleItemClick('${item.id}', ${item.price}, ${owned})">${actionText}</button>
         `;
         container.appendChild(card);
     });
 }
 
-document.getElementById("btn-toggle-shop").onclick = () => renderShop(shopMode === "SHOP" ? "LOCKER" : "SHOP");
-
-async function handleItemClick(id, price) {
+async function handleItemClick(id, price, isOwned) {
     if(!state.token) return msg("shop-msg", "Regístrate para usar la tienda.");
     
-    if (shopMode === "SHOP") {
+    if (!isOwned) {
+        // Flujo de compra
         const res = await apiCall("/shop", "POST", { skin_name: id, cost: price });
-        if(res.status === 200) { state.coins -= price; state.ownedSkins.push(id); state.currentSkin = id; renderShop("SHOP"); }
-        else msg("shop-msg", res.data.error);
+        if(res.status === 200) { 
+            state.coins -= price; 
+            state.ownedSkins.push(id); 
+            state.currentSkin = id; 
+            renderShop(); 
+        } else {
+            msg("shop-msg", res.data.error);
+        }
     } else {
+        // Flujo de equipar
         const res = await apiCall("/equip", "POST", { skin_name: id });
-        if(res.status === 200) { state.currentSkin = id; renderShop("LOCKER"); }
-        else msg("shop-msg", res.data.error);
+        if(res.status === 200) { 
+            state.currentSkin = id; 
+            renderShop(); 
+        } else {
+            msg("shop-msg", res.data.error);
+        }
     }
 }
 
 // --- MOTOR DE JUEGO HTML5 CANVAS ---
 const canvas = document.getElementById("gameCanvas");
-// Forzamos el tamaño absoluto para que nunca asuma 0x0
 canvas.width = 800;
 canvas.height = 600;
 const ctx = canvas.getContext("2d");
@@ -191,7 +203,6 @@ class Player {
             if (images[this.imgName] && images[this.imgName].complete && images[this.imgName].naturalWidth > 0) {
                 ctx.drawImage(images[this.imgName], this.x, this.y, this.w, this.h);
             } else {
-                // FALLBACK VISUAL: Si la imagen no carga, dibuja un cuadro cyan
                 ctx.fillStyle = "#00ffff"; 
                 ctx.fillRect(this.x, this.y, this.w, this.h);
             }
@@ -222,7 +233,6 @@ class Bullet {
         if(images['laser'] && images['laser'].complete && images['laser'].naturalWidth > 0) {
             ctx.drawImage(images['laser'], this.x, this.y, this.w, this.h); 
         } else {
-            // FALLBACK VISUAL: Cuadro amarillo para el láser
             ctx.fillStyle = "#ffff00";
             ctx.fillRect(this.x + 10, this.y, 5, 20);
         }
@@ -261,7 +271,6 @@ class Enemy {
         if(images[this.imgName] && images[this.imgName].complete && images[this.imgName].naturalWidth > 0) {
             ctx.drawImage(images[this.imgName], this.x, this.y, this.w, this.h);
         } else {
-            // FALLBACK VISUAL: Cuadros de colores para enemigos si la imagen no carga
             ctx.fillStyle = this.type === 'jefe' ? "#00ff00" : (this.type === 'mariposa' ? "#ff0000" : "#0000ff");
             ctx.fillRect(this.x, this.y, this.w, this.h);
         }
@@ -336,7 +345,6 @@ function updateHUD() {
                 heartImg.style.height = "25px";
                 lc.appendChild(heartImg);
             } else {
-                // FALLBACK VISUAL: Si falla la imagen del corazón
                 const span = document.createElement("span");
                 span.innerText = "❤️ ";
                 lc.appendChild(span);
@@ -345,7 +353,6 @@ function updateHUD() {
     }
 }
 
-// Bucle optimizado con performance.now()
 function gameLoop(timestamp) {
     if(!gameActive) return;
     

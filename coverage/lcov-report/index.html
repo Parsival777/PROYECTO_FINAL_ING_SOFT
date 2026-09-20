@@ -8,42 +8,9 @@
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
         
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Press Start 2P', cursive; }
+        body { background-color: #050510; color: white; overflow: hidden; display: flex; justify-content: center; align-items: center; height: 100vh; }
         
-        body { 
-            background-color: #050510; 
-            color: white; 
-            display: flex; 
-            justify-content: center; 
-            align-items: center; 
-            height: 100vh; 
-            margin: 0;
-            overflow: hidden;
-        }
-        
-        /* Contenedor maestro 800x600 */
-        #app-container {
-            width: 800px;
-            height: 600px;
-            position: relative;
-            background: #000;
-            border: 4px solid #00ffff;
-            box-shadow: 0 0 30px rgba(0, 255, 255, 0.2);
-            overflow: hidden; 
-        }
-
-        .screen { 
-            display: none; 
-            flex-direction: column; 
-            align-items: center; 
-            justify-content: center; 
-            width: 100%; 
-            height: 100%; 
-            position: absolute; 
-            top: 0; 
-            left: 0; 
-            background: radial-gradient(circle, #1a1a2e 0%, #000000 100%); 
-            z-index: 10; 
-        }
+        .screen { display: none; flex-direction: column; align-items: center; justify-content: center; width: 100%; height: 100%; position: absolute; top: 0; left: 0; background: radial-gradient(circle, #1a1a2e 0%, #000000 100%); z-index: 10; }
         .active { display: flex; }
         
         h1 { color: #00ffff; text-shadow: 0 0 10px #00ffff; margin-bottom: 30px; text-align: center; font-size: 24px; line-height: 1.5; }
@@ -63,93 +30,92 @@
         
         .error { color: #ff0000; min-height: 20px; margin-top: 10px; }
         
-        .shop-grid { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; max-width: 700px; }
-        .card { background: #111; border: 3px solid #555; padding: 20px; text-align: center; width: 220px; border-radius: 10px; transition: 0.3s; }
-        .card img { width: 60px; height: 60px; image-rendering: pixelated; margin-bottom: 15px; }
+        /* Tienda Grid */
+        .shop-grid { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; max-width: 900px; }
+        .card { background: #111; border: 3px solid #555; padding: 20px; text-align: center; width: 250px; border-radius: 10px; transition: 0.3s; }
+        .card img { width: 80px; height: 80px; image-rendering: pixelated; margin-bottom: 15px; }
         .card.common { border-color: #999; }
         .card.epic { border-color: #a335ee; box-shadow: 0 0 15px #a335ee; }
         .card.legendary { border-color: #ff8000; box-shadow: 0 0 15px #ff8000; }
         .card.equipped { background: #222; border-color: #00ff00; box-shadow: 0 0 20px #00ff00; }
         
-        /* Contenedor visual sincronizado con JS */
-        #galaga-game-container { display: none; width: 100%; height: 100%; position: absolute; top: 0; left: 0; background: #000; z-index: 5; }
-        canvas { display: block; image-rendering: pixelated; }
+        canvas { display: none; background: #000; z-index: 1; image-rendering: pixelated; }
         
-        #hud { position: absolute; top: 15px; left: 20px; right: 20px; display: flex; justify-content: space-between; z-index: 15; pointer-events: none; }
+        /* HUD del juego */
+        #hud { position: absolute; top: 20px; left: 20px; right: 20px; display: none; justify-content: space-between; z-index: 5; pointer-events: none; }
         .lives { display: flex; gap: 10px; }
         .lives img { width: 25px; height: 25px; }
     </style>
 </head>
 <body>
-    <div id="app-container">
-        <!-- LOGIN -->
-        <div id="auth-screen" class="screen active">
-            <h1 id="auth-title">🛸 GALAGA SAAS 🛸<br>TERMINAL DE ACCESO</h1>
-            <div class="form-group">
-                <input type="text" id="username" placeholder="Piloto" autocomplete="off"><br>
-                <input type="password" id="password" placeholder="Contraseña">
-            </div>
-            <div>
-                <button id="btn-login">Iniciar Sesión</button>
-                <button id="btn-register" class="btn-alt">Registrarse</button>
-            </div>
-            <button id="btn-guest" class="btn-danger" style="margin-top: 30px; font-size: 10px;">Entrar como Invitado</button>
-            <p id="auth-msg" class="error"></p>
-        </div>
 
-        <!-- LOBBY -->
-        <div id="lobby-screen" class="screen">
-            <h1>--- LOBBY DE PILOTOS ---</h1>
-            <h2 id="lobby-user">Piloto: ---</h2>
-            <h2 id="lobby-coins" style="color:#ffd700;">Billetera: 0 🪙</h2>
-            <p id="lobby-skin" style="color:#aaa;">Nave Actual: ---</p>
-            
-            <div style="margin-top: 40px; display: flex; flex-direction: column; gap: 15px;">
-                <button id="btn-play">Iniciar Misión</button>
-                <button id="btn-shop" class="btn-alt">Tienda y Locker</button>
-                <button id="btn-logout" class="btn-danger">Cerrar Sesión</button>
-            </div>
+    <!-- PANTALLA LOGIN / REGISTRO -->
+    <div id="auth-screen" class="screen active">
+        <h1 id="auth-title">🛸 GALAGA SAAS 🛸<br>TERMINAL DE ACCESO</h1>
+        <div class="form-group">
+            <input type="text" id="username" placeholder="Piloto" autocomplete="off"><br>
+            <input type="password" id="password" placeholder="Contraseña">
         </div>
-
-        <!-- TIENDA -->
-        <div id="shop-screen" class="screen">
-            <h1 id="shop-title">🏪 TIENDA INTERGALÁCTICA 🏪</h1>
-            <h2 id="shop-coins" style="color:#ffd700;">Tus Monedas: 0 🪙</h2>
-            
-            <div class="shop-grid" id="shop-container"></div>
-            
-            <div style="margin-top: 40px;">
-                <button id="btn-toggle-shop" class="btn-alt">Ir al Locker</button>
-                <button id="btn-back-lobby" class="btn-danger">Volver al Lobby</button>
-            </div>
-            <p id="shop-msg" class="error" style="color:#ffff00;"></p>
+        <div>
+            <button id="btn-login">Iniciar Sesión</button>
+            <button id="btn-register" class="btn-alt">Registrarse</button>
         </div>
+        <button id="btn-guest" class="btn-danger" style="margin-top: 30px; font-size: 10px;">Entrar como Invitado</button>
+        <p id="auth-msg" class="error"></p>
+    </div>
 
-        <!-- GAME OVER -->
-        <div id="gameover-screen" class="screen">
-            <h1 style="color: #ff0000; font-size: 40px;">GAME OVER</h1>
-            <h2 id="go-score">Puntuación: 0</h2>
-            <h2 id="go-coins" style="color:#ffd700; margin-bottom: 40px;">+ 0 🪙</h2>
-            
-            <div id="leaderboard-container" style="margin-bottom: 30px; text-align: left;">
-                <p style="color: #00ffff; text-align: center; margin-bottom: 20px;">--- TOP PILOTOS ---</p>
-                <div id="leaderboard-list" style="font-size: 12px; line-height: 1.8;"></div>
-            </div>
-            
-            <button id="btn-return-lobby">Volver al Lobby</button>
-        </div>
-
-        <!-- ÁREA DEL JUEGO Y HUD -->
-        <div id="galaga-game-container">
-            <div id="hud">
-                <div class="lives" id="lives-container"></div>
-                <div id="score-display" style="font-size: 16px; text-shadow: 2px 2px #000;">SCORE: 0</div>
-            </div>
-            <canvas id="gameCanvas" width="800" height="600"></canvas>
+    <!-- PANTALLA LOBBY -->
+    <div id="lobby-screen" class="screen">
+        <h1>--- LOBBY DE PILOTOS ---</h1>
+        <h2 id="lobby-user">Piloto: ---</h2>
+        <h2 id="lobby-coins" style="color:#ffd700;">Billetera: 0 🪙</h2>
+        <p id="lobby-skin" style="color:#aaa;">Nave Actual: ---</p>
+        
+        <div style="margin-top: 40px; display: flex; flex-direction: column; gap: 15px;">
+            <button id="btn-play">Iniciar Misión</button>
+            <button id="btn-shop" class="btn-alt">Tienda y Locker</button>
+            <button id="btn-logout" class="btn-danger">Cerrar Sesión</button>
         </div>
     </div>
 
-    <!-- Rompe el caché con la versión 3.0 -->
-    <script src="app.js?v=3.0"></script>
+    <!-- PANTALLA TIENDA / LOCKER -->
+    <div id="shop-screen" class="screen">
+        <h1 id="shop-title">🏪 TIENDA Y LOCKER 🏪</h1>
+        <h2 id="shop-coins" style="color:#ffd700;">Tus Monedas: 0 🪙</h2>
+        
+        <div class="shop-grid" id="shop-container">
+            <!-- Las tarjetas se generan por JS -->
+        </div>
+        
+        <div style="margin-top: 40px;">
+            <!-- Se eliminó el botón de toggle, ahora todo funciona en una sola pantalla -->
+            <button id="btn-back-lobby" class="btn-danger">Volver al Lobby</button>
+        </div>
+        <p id="shop-msg" class="error" style="color:#ffff00;"></p>
+    </div>
+
+    <!-- PANTALLA GAME OVER -->
+    <div id="gameover-screen" class="screen">
+        <h1 style="color: #ff0000; font-size: 40px;">GAME OVER</h1>
+        <h2 id="go-score">Puntuación: 0</h2>
+        <h2 id="go-coins" style="color:#ffd700; margin-bottom: 40px;">+ 0 🪙</h2>
+        
+        <div id="leaderboard-container" style="margin-bottom: 30px; text-align: left;">
+            <p style="color: #00ffff; text-align: center; margin-bottom: 20px;">--- TOP PILOTOS ---</p>
+            <div id="leaderboard-list"></div>
+        </div>
+        
+        <button id="btn-return-lobby">Volver al Lobby</button>
+    </div>
+
+    <!-- HUD DURANTE EL JUEGO -->
+    <div id="hud">
+        <div class="lives" id="lives-container"></div>
+        <div id="score-display">SCORE: 0</div>
+    </div>
+
+    <canvas id="gameCanvas" width="800" height="600"></canvas>
+
+    <script src="app.js"></script>
 </body>
 </html>
