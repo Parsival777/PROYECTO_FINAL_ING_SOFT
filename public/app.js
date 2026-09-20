@@ -146,8 +146,11 @@ async function handleItemClick(id, price) {
     }
 }
 
-// --- MOTOR DE JUEGO ---
+// --- MOTOR DE JUEGO HTML5 CANVAS ---
 const canvas = document.getElementById("gameCanvas");
+// Forzamos el tamaño absoluto para que nunca asuma 0x0
+canvas.width = 800;
+canvas.height = 600;
 const ctx = canvas.getContext("2d");
 
 const imagePaths = {
@@ -169,11 +172,10 @@ for (let key in imagePaths) {
 
 const sndShoot = new Audio('snd/laser.wav'); sndShoot.volume = 0.3;
 const sndExpl = new Audio('snd/explosion.wav'); sndExpl.volume = 0.4;
-const sndMusic = new Audio('snd/musica.ogg'); sndMusic.loop = true; sndMusic.volume = 0.5;
 
 let gameLoopId, gameActive = false;
 let player, bullets, enemies, enemyBullets, starsArr, score;
-let lastTime = Date.now();
+let lastTime = 0;
 const fpsInterval = 1000 / 60; 
 
 class Player {
@@ -189,6 +191,7 @@ class Player {
             if (images[this.imgName] && images[this.imgName].complete && images[this.imgName].naturalWidth > 0) {
                 ctx.drawImage(images[this.imgName], this.x, this.y, this.w, this.h);
             } else {
+                // FALLBACK VISUAL: Si la imagen no carga, dibuja un cuadro cyan
                 ctx.fillStyle = "#00ffff"; 
                 ctx.fillRect(this.x, this.y, this.w, this.h);
             }
@@ -218,6 +221,10 @@ class Bullet {
     draw() { 
         if(images['laser'] && images['laser'].complete && images['laser'].naturalWidth > 0) {
             ctx.drawImage(images['laser'], this.x, this.y, this.w, this.h); 
+        } else {
+            // FALLBACK VISUAL: Cuadro amarillo para el láser
+            ctx.fillStyle = "#ffff00";
+            ctx.fillRect(this.x + 10, this.y, 5, 20);
         }
     }
     update() { this.y += this.speed; if(this.y < 0) this.active = false; }
@@ -250,11 +257,15 @@ class Enemy {
         }
     }
     draw() {
+        ctx.globalAlpha = this.hp === 1 && this.type === 'jefe' ? 0.6 : 1.0;
         if(images[this.imgName] && images[this.imgName].complete && images[this.imgName].naturalWidth > 0) {
-            ctx.globalAlpha = this.hp === 1 && this.type === 'jefe' ? 0.6 : 1.0;
             ctx.drawImage(images[this.imgName], this.x, this.y, this.w, this.h);
-            ctx.globalAlpha = 1.0;
+        } else {
+            // FALLBACK VISUAL: Cuadros de colores para enemigos si la imagen no carga
+            ctx.fillStyle = this.type === 'jefe' ? "#00ff00" : (this.type === 'mariposa' ? "#ff0000" : "#0000ff");
+            ctx.fillRect(this.x, this.y, this.w, this.h);
         }
+        ctx.globalAlpha = 1.0;
     }
     update() {
         if (this.state === 'entering') {
@@ -303,8 +314,7 @@ document.getElementById("btn-play").onclick = () => {
     }));
 
     gameActive = true;
-    lastTime = Date.now(); 
-    sndMusic.play().catch(()=>{});
+    lastTime = performance.now(); 
     gameLoop();
 };
 
@@ -325,21 +335,27 @@ function updateHUD() {
                 heartImg.style.width = "25px";
                 heartImg.style.height = "25px";
                 lc.appendChild(heartImg);
+            } else {
+                // FALLBACK VISUAL: Si falla la imagen del corazón
+                const span = document.createElement("span");
+                span.innerText = "❤️ ";
+                lc.appendChild(span);
             }
         }
     }
 }
 
-function gameLoop() {
+// Bucle optimizado con performance.now()
+function gameLoop(timestamp) {
     if(!gameActive) return;
     
     gameLoopId = requestAnimationFrame(gameLoop);
     
-    const now = Date.now();
-    const elapsed = now - lastTime;
+    if (!timestamp) timestamp = performance.now();
+    const elapsed = timestamp - lastTime;
     
     if (elapsed > fpsInterval) {
-        lastTime = now - (elapsed % fpsInterval);
+        lastTime = timestamp - (elapsed % fpsInterval);
         
         ctx.fillStyle = "#000"; ctx.fillRect(0, 0, canvas.width, canvas.height);
         
@@ -386,7 +402,7 @@ function gameLoop() {
 }
 
 async function endGame() {
-    gameActive = false; sndMusic.pause(); sndMusic.currentTime = 0;
+    gameActive = false; 
     showScreen("gameover-screen");
     
     const scoreEl = document.getElementById("go-score");
