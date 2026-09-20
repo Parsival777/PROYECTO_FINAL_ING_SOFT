@@ -39,7 +39,6 @@
         .card.legendary { border-color: #ff8000; box-shadow: 0 0 15px #ff8000; }
         .card.equipped { background: #222; border-color: #00ff00; box-shadow: 0 0 20px #00ff00; }
         
-        /* Se eliminó el display:none para permitir que game-wrapper lo controle */
         canvas { background: #000; z-index: 1; image-rendering: pixelated; }
         
         /* HUD del juego adaptado al contenedor unificado */
@@ -83,9 +82,7 @@
         <h1 id="shop-title">🏪 TIENDA INTERGALÁCTICA 🏪</h1>
         <h2 id="shop-coins" style="color:#ffd700;">Tus Monedas: 0 🪙</h2>
         
-        <div class="shop-grid" id="shop-container">
-            <!-- Las tarjetas se generan por JS -->
-        </div>
+        <div class="shop-grid" id="shop-container"></div>
         
         <div style="margin-top: 40px;">
             <button id="btn-toggle-shop" class="btn-alt">Ir al Locker</button>
@@ -108,10 +105,9 @@
         <button id="btn-return-lobby">Volver al Lobby</button>
     </div>
 
-    <!-- CONTENEDOR DEL JUEGO UNIFICADO -->
+    <!-- CONTENEDOR DEL JUEGO UNIFICADO (AQUÍ ESTÁ EL GAME-WRAPPER) -->
     <div id="game-wrapper" style="display: none; position: relative; width: 800px; height: 600px; margin: 0 auto; box-shadow: 0 0 20px rgba(0, 255, 255, 0.2); border: 2px solid #555;">
         
-        <!-- HUD ANCLADO AL LIENZO -->
         <div id="hud" style="position: absolute; top: 15px; left: 20px; right: 20px; display: none; justify-content: space-between; z-index: 5; pointer-events: none;">
             <div class="lives" id="lives-container"></div>
             <div id="score-display" style="font-size: 16px; text-shadow: 2px 2px #000;">SCORE: 0</div>

@@ -1,4 +1,3 @@
-// --- CONFIGURACIÓN CON RUTAS RELATIVAS (UNIFICADO) ---
 const API_URL = "/api";
 let state = {
     token: null, user: "Invitado", coins: 0, 
@@ -39,13 +38,14 @@ async function loadProfile() {
 const screens = ["auth-screen", "lobby-screen", "shop-screen", "gameover-screen"];
 function showScreen(id) {
     screens.forEach(s => document.getElementById(s).classList.remove("active"));
-    document.getElementById("game-wrapper").style.display = "none";
+    const wrapper = document.getElementById("game-wrapper");
+    if(wrapper) wrapper.style.display = "none";
     if(id) document.getElementById(id).classList.add("active");
 }
 
 function msg(id, text, color="#ff0000") {
     const el = document.getElementById(id);
-    el.innerText = text; el.style.color = color;
+    if(el) { el.innerText = text; el.style.color = color; }
 }
 
 document.getElementById("btn-login").onclick = async () => {
@@ -286,8 +286,11 @@ window.addEventListener('keyup', e => keys[e.key] = false);
 
 document.getElementById("btn-play").onclick = () => {
     showScreen(null); 
-    document.getElementById("game-wrapper").style.display = "block";
-    document.getElementById("hud").style.display = "flex";
+    const wrapper = document.getElementById("game-wrapper");
+    if(wrapper) wrapper.style.display = "block";
+    
+    const hud = document.getElementById("hud");
+    if(hud) hud.style.display = "flex";
     
     player = new Player(state.currentSkin);
     bullets = []; enemies = []; enemyBullets = []; score = 0;
@@ -312,20 +315,23 @@ function checkCollision(r1, r2) {
 }
 
 function updateHUD() {
-    document.getElementById("score-display").innerText = `SCORE: ${score}`;
+    const scoreEl = document.getElementById("score-display");
+    if(scoreEl) scoreEl.innerText = `SCORE: ${score}`;
+    
     const lc = document.getElementById("lives-container");
-    lc.innerHTML = "";
-    for(let i=0; i<player.lives; i++) {
-        if(images['heart'] && images['heart'].complete && images['heart'].naturalWidth > 0) {
-            const heartImg = images['heart'].cloneNode();
-            heartImg.style.width = "25px";
-            heartImg.style.height = "25px";
-            lc.appendChild(heartImg);
+    if(lc) {
+        lc.innerHTML = "";
+        for(let i=0; i<player.lives; i++) {
+            if(images['heart'] && images['heart'].complete && images['heart'].naturalWidth > 0) {
+                const heartImg = images['heart'].cloneNode();
+                heartImg.style.width = "25px";
+                heartImg.style.height = "25px";
+                lc.appendChild(heartImg);
+            }
         }
     }
 }
 
-// Bucle bloqueado a 60 FPS
 function gameLoop(timestamp) {
     if(!gameActive) return;
     
@@ -384,24 +390,29 @@ function gameLoop(timestamp) {
 async function endGame() {
     gameActive = false; sndMusic.pause(); sndMusic.currentTime = 0;
     showScreen("gameover-screen");
-    document.getElementById("go-score").innerText = `Puntuación: ${score}`;
     
+    const scoreEl = document.getElementById("go-score");
+    if(scoreEl) scoreEl.innerText = `Puntuación: ${score}`;
+    
+    const coinsEl = document.getElementById("go-coins");
     if(state.token && score > 0) {
         const earned = Math.floor(score / 10);
-        document.getElementById("go-coins").innerText = `+ ${earned} 🪙`;
+        if(coinsEl) coinsEl.innerText = `+ ${earned} 🪙`;
         await apiCall("/score", "POST", { score });
         await loadProfile();
     } else {
-        document.getElementById("go-coins").innerText = "Modo Invitado";
+        if(coinsEl) coinsEl.innerText = "Modo Invitado";
     }
 
     const res = await apiCall("/leaderboard");
     const list = document.getElementById("leaderboard-list");
-    list.innerHTML = "";
-    if(res.status === 200) {
-        res.data.forEach((p, i) => {
-            list.innerHTML += `<p>${i+1}. ${p.username} - ${p.score} pts</p>`;
-        });
+    if(list) {
+        list.innerHTML = "";
+        if(res.status === 200) {
+            res.data.forEach((p, i) => {
+                list.innerHTML += `<p>${i+1}. ${p.username} - ${p.score} pts</p>`;
+            });
+        }
     }
 }
 
