@@ -38,8 +38,8 @@ async function loadProfile() {
 const screens = ["auth-screen", "lobby-screen", "shop-screen", "gameover-screen"];
 function showScreen(id) {
     screens.forEach(s => document.getElementById(s).classList.remove("active"));
-    const gameLayer = document.getElementById("game-layer");
-    if(gameLayer) gameLayer.style.display = "none";
+    const wrapper = document.getElementById("game-wrapper");
+    if(wrapper) wrapper.style.display = "none";
     if(id) document.getElementById(id).classList.add("active");
 }
 
@@ -145,6 +145,7 @@ async function handleItemClick(id, price) {
     }
 }
 
+// --- MOTOR DE JUEGO ---
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 
@@ -171,7 +172,7 @@ const sndMusic = new Audio('snd/musica.ogg'); sndMusic.loop = true; sndMusic.vol
 
 let gameLoopId, gameActive = false;
 let player, bullets, enemies, enemyBullets, starsArr, score;
-let lastTime = 0;
+let lastTime = Date.now();
 const fpsInterval = 1000 / 60; 
 
 class Player {
@@ -285,8 +286,8 @@ window.addEventListener('keyup', e => keys[e.key] = false);
 
 document.getElementById("btn-play").onclick = () => {
     showScreen(null); 
-    const gameLayer = document.getElementById("game-layer");
-    if(gameLayer) gameLayer.style.display = "block";
+    const wrapper = document.getElementById("game-wrapper");
+    if(wrapper) wrapper.style.display = "block";
     
     player = new Player(state.currentSkin);
     bullets = []; enemies = []; enemyBullets = []; score = 0;
@@ -301,7 +302,7 @@ document.getElementById("btn-play").onclick = () => {
     }));
 
     gameActive = true;
-    lastTime = performance.now(); 
+    lastTime = Date.now(); 
     sndMusic.play().catch(()=>{});
     gameLoop();
 };
@@ -328,16 +329,16 @@ function updateHUD() {
     }
 }
 
-function gameLoop(timestamp) {
+function gameLoop() {
     if(!gameActive) return;
     
     gameLoopId = requestAnimationFrame(gameLoop);
     
-    if (!timestamp) timestamp = performance.now();
-    const elapsed = timestamp - lastTime;
+    const now = Date.now();
+    const elapsed = now - lastTime;
     
     if (elapsed > fpsInterval) {
-        lastTime = timestamp - (elapsed % fpsInterval);
+        lastTime = now - (elapsed % fpsInterval);
         
         ctx.fillStyle = "#000"; ctx.fillRect(0, 0, canvas.width, canvas.height);
         
