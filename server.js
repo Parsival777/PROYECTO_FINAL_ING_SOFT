@@ -13,7 +13,8 @@ app.use(cors());
 app.use(express.json());
 
 // Servir el frontend web
-app.use(express.static(path.join(__dirname, 'public')));
+// Servir el frontend web (con acceptRanges desactivado para audios pequeños)
+app.use(express.static(path.join(__dirname, 'public'), { acceptRanges: false }));
 
 const dbConfig = {
     host: process.env.DB_HOST,

@@ -8,8 +8,8 @@ let shopMode = "SHOP";
 
 const CATALOG = [
     { id: "player_default", name: "Nave Base", price: 0, rarity: "common", src: "img/main_ship.png" },
-    { id: "skin_stealth", name: "Caza Furtivo", price: 1500, rarity: "epic", src: "img/main_ship.png" },
-    { id: "skin_neon", name: "Neón Cósmico", price: 3000, rarity: "legendary", src: "img/main_ship.png" }
+    { id: "skin_stealth", name: "Caza Furtivo", price: 1500, rarity: "epic", src: "img/skin_stealh.png" },
+    { id: "skin_neon", name: "Neón Cósmico", price: 3000, rarity: "legendary", src: "img/skin_neon.png" }
 ];
 
 async function apiCall(endpoint, method = "GET", body = null) {
@@ -39,8 +39,7 @@ async function loadProfile() {
 const screens = ["auth-screen", "lobby-screen", "shop-screen", "gameover-screen"];
 function showScreen(id) {
     screens.forEach(s => document.getElementById(s).classList.remove("active"));
-    document.getElementById("gameCanvas").style.display = "none";
-    document.getElementById("hud").style.display = "none";
+    document.getElementById("game-wrapper").style.display = "none";
     if(id) document.getElementById(id).classList.add("active");
 }
 
@@ -153,8 +152,8 @@ const ctx = canvas.getContext("2d");
 // Carga de imágenes corregida con los nombres reales de tus archivos
 const imagePaths = {
     'player_default': 'img/main_ship.png',
-    'skin_stealth': 'img/main_ship.png', // Usará main_ship temporalmente si la compras
-    'skin_neon': 'img/main_ship.png',    // Usará main_ship temporalmente si la compras
+    'skin_stealth': 'img/skin_stealh.png', // Usará main_ship temporalmente si la compras
+    'skin_neon': 'img/skin_neon.png',    // Usará main_ship temporalmente si la compras
     'laser': 'img/laser.png',
     'red_ship': 'img/red_ship.png',
     'blue_ship': 'img/blue_ship.png',
@@ -288,7 +287,7 @@ window.addEventListener('keyup', e => keys[e.key] = false);
 
 document.getElementById("btn-play").onclick = () => {
     showScreen(null); 
-    document.getElementById("gameCanvas").style.display = "block";
+    document.getElementById("game-wrapper").style.display = "block";
     document.getElementById("hud").style.display = "flex";
     
     player = new Player(state.currentSkin);
