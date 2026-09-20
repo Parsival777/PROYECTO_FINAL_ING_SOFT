@@ -8,8 +8,8 @@ let shopMode = "SHOP";
 
 const CATALOG = [
     { id: "player_default", name: "Nave Base", price: 0, rarity: "common", src: "img/main_ship.png" },
-    { id: "skin_stealth", name: "Caza Furtivo", price: 1500, rarity: "epic", src: "img/skin_stealth.png" },
-    { id: "skin_neon", name: "Neón Cósmico", price: 3000, rarity: "legendary", src: "img/skin_neon.png" }
+    { id: "skin_stealth", name: "Caza Furtivo", price: 1500, rarity: "epic", src: "img/main_ship.png" },
+    { id: "skin_neon", name: "Neón Cósmico", price: 3000, rarity: "legendary", src: "img/main_ship.png" }
 ];
 
 async function apiCall(endpoint, method = "GET", body = null) {
@@ -30,7 +30,6 @@ async function loadProfile() {
     if (!state.token) return;
     const res = await apiCall("/me");
     if (res.status === 200) {
-        // Validaciones agregadas para evitar nulls
         state.coins = res.data.coins || 0;
         state.currentSkin = res.data.current_skin || "player_default";
         state.ownedSkins = res.data.owned_skins ? res.data.owned_skins.split(',') : ["player_default"];
@@ -151,17 +150,31 @@ async function handleItemClick(id, price) {
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 
+// Carga de imágenes corregida con los nombres reales de tus archivos
+const imagePaths = {
+    'player_default': 'img/main_ship.png',
+    'skin_stealth': 'img/main_ship.png', // Usará main_ship temporalmente si la compras
+    'skin_neon': 'img/main_ship.png',    // Usará main_ship temporalmente si la compras
+    'laser': 'img/laser.png',
+    'red_ship': 'img/red_ship.png',
+    'blue_ship': 'img/blue_ship.png',
+    'green_ship': 'img/green_ship.png'
+};
+
 const images = {};
-['player_default', 'skin_stealth', 'skin_neon', 'laser', 'red_ship', 'blue_ship', 'green_ship', 'heart'].forEach(name => {
-    images[name] = new Image();
-    images[name].src = `img/${name}.png`;
-});
+for (let key in imagePaths) {
+    images[key] = new Image();
+    images[key].src = imagePaths[key];
+}
+
 const sndShoot = new Audio('snd/laser.wav'); sndShoot.volume = 0.3;
 const sndExpl = new Audio('snd/explosion.wav'); sndExpl.volume = 0.4;
 const sndMusic = new Audio('snd/musica.ogg'); sndMusic.loop = true; sndMusic.volume = 0.5;
 
 let gameLoopId, gameActive = false;
 let player, bullets, enemies, enemyBullets, starsArr, score;
+let lastTime = 0;
+const fpsInterval = 1000 / 60; // Bloqueo estricto a 60 FPS
 
 class Player {
     constructor(skinId) {
@@ -169,12 +182,17 @@ class Player {
         this.x = canvas.width/2 - this.w/2; this.y = canvas.height - this.h - 10;
         this.speed = 6; this.lives = 3; this.hidden = false; this.hideTime = 0;
         this.lastShot = 0;
-        this.imgName = skinId || 'player_default'; // Validación añadida
+        this.imgName = skinId || 'player_default'; 
     }
     draw() {
-        // Validación de existencia de imagen para evitar crash
-        if(!this.hidden && images[this.imgName] && images[this.imgName].complete) {
-            ctx.drawImage(images[this.imgName], this.x, this.y, this.w, this.h);
+        if(!this.hidden) {
+            // Verificación profunda para evitar que colapse si la imagen aún carga
+            if (images[this.imgName] && images[this.imgName].complete && images[this.imgName].naturalWidth > 0) {
+                ctx.drawImage(images[this.imgName], this.x, this.y, this.w, this.h);
+            } else {
+                ctx.fillStyle = "#00ffff"; // Respaldo visual temporal
+                ctx.fillRect(this.x, this.y, this.w, this.h);
+            }
         }
     }
     update(keys) {
@@ -198,7 +216,11 @@ class Player {
 
 class Bullet {
     constructor(x, y) { this.x = x; this.y = y; this.w = 25; this.h = 40; this.speed = -12; this.active = true; }
-    draw() { if(images['laser'].complete) ctx.drawImage(images['laser'], this.x, this.y, this.w, this.h); }
+    draw() { 
+        if(images['laser'] && images['laser'].complete && images['laser'].naturalWidth > 0) {
+            ctx.drawImage(images['laser'], this.x, this.y, this.w, this.h); 
+        }
+    }
     update() { this.y += this.speed; if(this.y < 0) this.active = false; }
 }
 
@@ -229,7 +251,7 @@ class Enemy {
         }
     }
     draw() {
-        if(images[this.imgName].complete) {
+        if(images[this.imgName] && images[this.imgName].complete && images[this.imgName].naturalWidth > 0) {
             ctx.globalAlpha = this.hp === 1 && this.type === 'jefe' ? 0.6 : 1.0;
             ctx.drawImage(images[this.imgName], this.x, this.y, this.w, this.h);
             ctx.globalAlpha = 1.0;
@@ -282,6 +304,7 @@ document.getElementById("btn-play").onclick = () => {
     }));
 
     gameActive = true;
+    lastTime = performance.now(); // Reinicia el contador de tiempo al jugar
     sndMusic.play().catch(()=>{});
     gameLoop();
 };
@@ -293,58 +316,66 @@ function checkCollision(r1, r2) {
 function updateHUD() {
     document.getElementById("score-display").innerText = `SCORE: ${score}`;
     const lc = document.getElementById("lives-container");
-    lc.innerHTML = "";
-    for(let i=0; i<player.lives; i++) {
-        if(images['heart'].complete) lc.appendChild(images['heart'].cloneNode());
-    }
+    // Corrección para usar un emoji nativo si no hay archivo de imagen de corazón
+    lc.innerHTML = "❤️".repeat(Math.max(0, player.lives));
+    lc.style.fontSize = "20px";
 }
 
-function gameLoop() {
+// Bucle bloqueado a 60 FPS
+function gameLoop(timestamp) {
     if(!gameActive) return;
     
-    ctx.fillStyle = "#000"; ctx.fillRect(0, 0, canvas.width, canvas.height);
-    
-    ctx.fillStyle = "#c8c8c8";
-    starsArr.forEach(s => {
-        s.y += s.s; if(s.y > canvas.height) { s.y = -10; s.x = Math.random() * canvas.width; }
-        ctx.fillRect(s.x, s.y, s.size, s.size);
-    });
-
-    player.update(keys); player.draw();
-    
-    bullets.forEach(b => { b.update(); b.draw(); });
-    enemyBullets.forEach(b => { b.update(); b.draw(); });
-    
-    enemies.forEach(e => {
-        e.update(); e.draw();
-        
-        if(!player.hidden && checkCollision(player, e)) { player.hit(); }
-        
-        bullets.forEach(b => {
-            if(b.active && checkCollision(b, e)) {
-                b.active = false; e.hp--;
-                if(e.hp <= 0) {
-                    e.active = false; score += e.points;
-                    sndExpl.currentTime = 0; sndExpl.play().catch(()=>{});
-                    enemies.push(new Enemy(e.col, e.row)); 
-                }
-            }
-        });
-    });
-
-    enemyBullets.forEach(b => {
-        if(b.active && !player.hidden && checkCollision(b, player)) { b.active = false; player.hit(); }
-    });
-
-    bullets = bullets.filter(b => b.active);
-    enemyBullets = enemyBullets.filter(b => b.active);
-    enemies = enemies.filter(e => e.active);
-
-    updateHUD();
-
-    if(player.lives <= 0) return endGame();
-
     gameLoopId = requestAnimationFrame(gameLoop);
+    
+    if (!timestamp) timestamp = performance.now();
+    const elapsed = timestamp - lastTime;
+    
+    // Solo actualiza y dibuja si ha pasado el tiempo necesario para 1 frame (60 FPS)
+    if (elapsed > fpsInterval) {
+        lastTime = timestamp - (elapsed % fpsInterval);
+        
+        ctx.fillStyle = "#000"; ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        ctx.fillStyle = "#c8c8c8";
+        starsArr.forEach(s => {
+            s.y += s.s; if(s.y > canvas.height) { s.y = -10; s.x = Math.random() * canvas.width; }
+            ctx.fillRect(s.x, s.y, s.size, s.size);
+        });
+
+        player.update(keys); player.draw();
+        
+        bullets.forEach(b => { b.update(); b.draw(); });
+        enemyBullets.forEach(b => { b.update(); b.draw(); });
+        
+        enemies.forEach(e => {
+            e.update(); e.draw();
+            
+            if(!player.hidden && checkCollision(player, e)) { player.hit(); }
+            
+            bullets.forEach(b => {
+                if(b.active && checkCollision(b, e)) {
+                    b.active = false; e.hp--;
+                    if(e.hp <= 0) {
+                        e.active = false; score += e.points;
+                        sndExpl.currentTime = 0; sndExpl.play().catch(()=>{});
+                        enemies.push(new Enemy(e.col, e.row)); 
+                    }
+                }
+            });
+        });
+
+        enemyBullets.forEach(b => {
+            if(b.active && !player.hidden && checkCollision(b, player)) { b.active = false; player.hit(); }
+        });
+
+        bullets = bullets.filter(b => b.active);
+        enemyBullets = enemyBullets.filter(b => b.active);
+        enemies = enemies.filter(e => e.active);
+
+        updateHUD();
+
+        if(player.lives <= 0) return endGame();
+    }
 }
 
 async function endGame() {
