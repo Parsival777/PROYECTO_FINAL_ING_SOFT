@@ -145,7 +145,6 @@ async function handleItemClick(id, price) {
     }
 }
 
-// --- MOTOR DE JUEGO HTML5 CANVAS ---
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 

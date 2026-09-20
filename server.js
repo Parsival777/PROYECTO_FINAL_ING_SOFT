@@ -12,8 +12,7 @@ const PORT = process.env.PORT || 3000;
 app.use(cors()); 
 app.use(express.json());
 
-// Servir el frontend web
-// Servir el frontend web (con acceptRanges desactivado para audios pequeños)
+// Servir el frontend web con acceptRanges desactivado para evitar errores 416
 app.use(express.static(path.join(__dirname, 'public'), { acceptRanges: false }));
 
 const dbConfig = {
@@ -129,12 +128,10 @@ app.get('/api/leaderboard', async (req, res) => {
     }
 });
 
-// Ruta comodín para cargar tu página web
 app.get(/.*/, (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Exportación condicional para Jest
 if (require.main === module) {
     app.listen(PORT, () => console.log(`🚀 API y Servidor Web funcionando en el puerto ${PORT}`));
 }
