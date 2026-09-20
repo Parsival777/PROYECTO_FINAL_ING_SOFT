@@ -12,8 +12,16 @@ const PORT = process.env.PORT || 3000;
 app.use(cors()); 
 app.use(express.json());
 
-// Servir el frontend web con acceptRanges desactivado para evitar errores 416
-app.use(express.static(path.join(__dirname, 'public'), { acceptRanges: false }));
+// Bloqueo estricto de caché para evitar que Chrome guarde versiones viejas
+app.use(express.static(path.join(__dirname, 'public'), { 
+    acceptRanges: false,
+    etag: false,
+    setHeaders: (res, path) => {
+        res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+        res.set('Expires', '-1');
+        res.set('Pragma', 'no-cache');
+    }
+}));
 
 const dbConfig = {
     host: process.env.DB_HOST,
