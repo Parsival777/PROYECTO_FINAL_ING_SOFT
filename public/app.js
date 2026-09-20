@@ -36,10 +36,11 @@ async function loadProfile() {
 }
 
 const screens = ["auth-screen", "lobby-screen", "shop-screen", "gameover-screen"];
+
 function showScreen(id) {
     screens.forEach(s => document.getElementById(s).classList.remove("active"));
-    const wrapper = document.getElementById("game-wrapper");
-    if(wrapper) wrapper.style.display = "none";
+    const gameContainer = document.getElementById("galaga-game-container");
+    if(gameContainer) gameContainer.style.display = "none";
     if(id) document.getElementById(id).classList.add("active");
 }
 
@@ -286,8 +287,8 @@ window.addEventListener('keyup', e => keys[e.key] = false);
 
 document.getElementById("btn-play").onclick = () => {
     showScreen(null); 
-    const wrapper = document.getElementById("game-wrapper");
-    if(wrapper) wrapper.style.display = "block";
+    const gameContainer = document.getElementById("galaga-game-container");
+    if(gameContainer) gameContainer.style.display = "block";
     
     player = new Player(state.currentSkin);
     bullets = []; enemies = []; enemyBullets = []; score = 0;
