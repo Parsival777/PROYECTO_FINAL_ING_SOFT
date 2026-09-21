@@ -108,7 +108,7 @@ document.getElementById("btn-back-lobby").onclick = enterLobby;
 // Lógica de Tienda y Locker unificada
 async function renderShop() {
     showScreen("shop-screen");
-    document.getElementById("shop-title").innerText = "🏪 TIENDA Y LOCKER 🏪";
+    document.getElementById("shop-title").innerText = " TIENDA Y LOCKER ";
     document.getElementById("shop-coins").innerText = `Tus Monedas: ${state.coins} 🪙`;
     msg("shop-msg", "");
 
