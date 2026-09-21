@@ -65,7 +65,7 @@ body {
     align-items: center;
     height: 100vh;
     position: relative;
-    font-size: 1.15rem;
+    font-size: 1.45rem;
     line-height: 1.5;
 
     /* Marco de gabinete + viñeta, sin tocar el HTML */
@@ -150,13 +150,13 @@ h2 {
     color: var(--signal-gold);
     letter-spacing: 1px;
     margin-bottom: 18px;
-    font-size: 1.5rem;
+    font-size: 1.65rem;
     text-shadow: 0 0 8px rgba(255,201,60,0.35);
 }
 
 p {
     margin-bottom: 15px;
-    font-size: 1.15rem;
+    font-size: 1.4rem;
     line-height: 1.5;
     text-align: center;
     color: var(--dim-static);
@@ -172,7 +172,7 @@ input {
     border: 2px solid var(--phosphor-cyan);
     color: var(--starlight);
     padding: 14px 16px;
-    font-size: 1.2rem;
+    font-size: 1.4rem;
     width: 300px;
     max-width: 80vw;
     text-align: center;
@@ -188,6 +188,38 @@ input:focus {
     box-shadow: 0 0 14px var(--phosphor-magenta), 3px 3px 0 0 rgba(0,0,0,0.5);
 }
 
+/* Campo de contraseña con botón de mostrar/ocultar */
+.password-wrapper {
+    position: relative;
+    display: inline-block;
+}
+.password-wrapper input { padding-right: 46px; margin-bottom: 12px; }
+.toggle-password {
+    position: absolute;
+    top: 0;
+    right: 0;
+    height: calc(100% - 12px);
+    width: 44px;
+    margin: 0;
+    padding: 0;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    color: var(--dim-static);
+    font-size: 1.3rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.toggle-password:hover {
+    background: transparent;
+    color: var(--phosphor-cyan);
+    box-shadow: none;
+    transform: none;
+}
+.toggle-password:active { transform: none; box-shadow: none; }
+
 /* ============================================
    BOTONES - bisel duro estilo botón de arcade
    ============================================ */
@@ -197,7 +229,7 @@ button {
     color: var(--phosphor-green);
     padding: 14px 28px;
     cursor: pointer;
-    font-size: 1.1rem;
+    font-size: 1.3rem;
     letter-spacing: 0.5px;
     margin: 8px;
     font-family: var(--font-body);
@@ -226,7 +258,7 @@ button:disabled {
 .btn-danger { border-color: var(--alert-coral); color: var(--alert-coral); }
 .btn-danger:hover { background: var(--alert-coral); color: var(--cabinet-edge); box-shadow: 4px 4px 0 0 rgba(0,0,0,0.6), 0 0 16px var(--alert-coral); }
 
-.error { color: var(--alert-coral); min-height: 20px; margin-top: 10px; font-size: 1.15rem; }
+.error { color: var(--alert-coral); min-height: 20px; margin-top: 10px; font-size: 1.35rem; }
 
 /* ============================================
    TIENDA - grid y cards con bisel pixel-art
@@ -266,8 +298,8 @@ button:disabled {
         0 0 22px rgba(57,255,136,0.45);
 }
 
-.card h3 { font-family: var(--font-body); font-size: 1.3rem; margin-bottom: 8px; color: var(--starlight); }
-.card p { color: var(--starlight); margin-bottom: 14px; font-size: 1.1rem; }
+.card h3 { font-family: var(--font-body); font-size: 1.5rem; margin-bottom: 8px; color: var(--starlight); }
+.card p { color: var(--starlight); margin-bottom: 14px; font-size: 1.3rem; }
 
 /* ============================================
    CANVAS DEL JUEGO
@@ -307,7 +339,7 @@ canvas {
             inset 0 0 0 6px var(--cabinet),
             inset 0 0 0 8px var(--cabinet-edge),
             inset 0 0 90px 30px rgba(0,0,0,0.9);
-        font-size: 1rem;
+        font-size: 1.2rem;
     }
     body::after { background-size: 26px 26px; }
     input { width: 260px; }

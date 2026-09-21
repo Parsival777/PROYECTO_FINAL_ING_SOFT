@@ -70,6 +70,20 @@ document.getElementById("btn-guest").onclick = () => {
     state.token = null; state.user = "Invitado"; enterLobby();
 };
 
+document.getElementById("btn-toggle-password").onclick = () => {
+    const pwd = document.getElementById("password");
+    const btn = document.getElementById("btn-toggle-password");
+    if (pwd.type === "password") {
+        pwd.type = "text";
+        btn.textContent = "🙈";
+        btn.setAttribute("aria-label", "Ocultar contraseña");
+    } else {
+        pwd.type = "password";
+        btn.textContent = "👁";
+        btn.setAttribute("aria-label", "Mostrar contraseña");
+    }
+};
+
 document.getElementById("btn-logout").onclick = () => {
     state.token = null; document.getElementById("username").value = ""; document.getElementById("password").value = "";
     showScreen("auth-screen"); msg("auth-msg", "");
