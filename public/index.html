@@ -69,13 +69,14 @@
         <button id="btn-return-lobby">Volver al Lobby</button>
     </div>
 
-    <!-- HUD DURANTE EL JUEGO -->
-    <div id="hud">
-        <div class="lives" id="lives-container"></div>
-        <div id="score-display">SCORE: 0</div>
+    <!-- CONTENEDOR DEL JUEGO: el HUD queda anclado al canvas, no a toda la página -->
+    <div id="game-wrapper">
+        <div id="hud">
+            <div class="lives" id="lives-container"></div>
+            <div id="score-display">SCORE: 0</div>
+        </div>
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
     </div>
-
-    <canvas id="gameCanvas" width="800" height="600"></canvas>
 
     <script src="app.js"></script>
 </body>

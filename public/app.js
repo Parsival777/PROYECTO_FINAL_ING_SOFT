@@ -38,8 +38,7 @@ const screens = ["auth-screen", "lobby-screen", "shop-screen", "gameover-screen"
 
 function showScreen(id) {
     screens.forEach(s => document.getElementById(s).classList.remove("active"));
-    canvas.style.display = "none";
-    document.getElementById("hud").style.display = "none";
+    document.getElementById("game-wrapper").style.display = "none";
     if(id) document.getElementById(id).classList.add("active");
 }
 
@@ -321,8 +320,7 @@ window.addEventListener('keyup', e => keys[e.key] = false);
 
 document.getElementById("btn-play").onclick = () => {
     showScreen(null); 
-    canvas.style.display = "block";
-    document.getElementById("hud").style.display = "flex";
+    document.getElementById("game-wrapper").style.display = "block";
     
     player = new Player(state.currentSkin);
     bullets = []; enemies = []; enemyBullets = []; score = 0;
@@ -425,8 +423,6 @@ function gameLoop(timestamp) {
 async function endGame() {
     gameActive = false; 
     showScreen("gameover-screen");
-    canvas.style.display = "none";
-    document.getElementById("hud").style.display = "none";
     
     const scoreEl = document.getElementById("go-score");
     if(scoreEl) scoreEl.innerText = `Puntuación: ${score}`;
