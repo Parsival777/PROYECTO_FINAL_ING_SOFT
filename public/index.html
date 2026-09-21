@@ -4,48 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Galaga SaaS - Full Stack</title>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
-        
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Press Start 2P', cursive; }
-        body { background-color: #050510; color: white; overflow: hidden; display: flex; justify-content: center; align-items: center; height: 100vh; }
-        
-        .screen { display: none; flex-direction: column; align-items: center; justify-content: center; width: 100%; height: 100%; position: absolute; top: 0; left: 0; background: radial-gradient(circle, #1a1a2e 0%, #000000 100%); z-index: 10; }
-        .active { display: flex; }
-        
-        h1 { color: #00ffff; text-shadow: 0 0 10px #00ffff; margin-bottom: 30px; text-align: center; font-size: 24px; line-height: 1.5; }
-        h2 { color: #ffd700; margin-bottom: 20px; font-size: 16px; }
-        p { margin-bottom: 15px; font-size: 12px; line-height: 1.5; text-align: center; }
-        
-        .form-group { margin-bottom: 20px; text-align: center; }
-        input { background: #000; border: 2px solid #00ffff; color: #fff; padding: 15px; font-size: 14px; width: 300px; text-align: center; outline: none; margin-bottom: 10px; font-family: inherit; }
-        input:focus { border-color: #ff00ff; box-shadow: 0 0 15px #ff00ff; }
-        
-        button { background: transparent; border: 2px solid #00ff00; color: #00ff00; padding: 15px 30px; cursor: pointer; font-size: 14px; text-transform: uppercase; margin: 10px; transition: 0.3s; font-family: inherit; }
-        button:hover { background: #00ff00; color: #000; box-shadow: 0 0 15px #00ff00; }
-        .btn-alt { border-color: #ff00ff; color: #ff00ff; }
-        .btn-alt:hover { background: #ff00ff; color: #000; box-shadow: 0 0 15px #ff00ff; }
-        .btn-danger { border-color: #ff0000; color: #ff0000; }
-        .btn-danger:hover { background: #ff0000; color: #fff; box-shadow: 0 0 15px #ff0000; }
-        
-        .error { color: #ff0000; min-height: 20px; margin-top: 10px; }
-        
-        /* Tienda Grid */
-        .shop-grid { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; max-width: 900px; }
-        .card { background: #111; border: 3px solid #555; padding: 20px; text-align: center; width: 250px; border-radius: 10px; transition: 0.3s; }
-        .card img { width: 80px; height: 80px; image-rendering: pixelated; margin-bottom: 15px; }
-        .card.common { border-color: #999; }
-        .card.epic { border-color: #a335ee; box-shadow: 0 0 15px #a335ee; }
-        .card.legendary { border-color: #ff8000; box-shadow: 0 0 15px #ff8000; }
-        .card.equipped { background: #222; border-color: #00ff00; box-shadow: 0 0 20px #00ff00; }
-        
-        canvas { display: none; background: #000; z-index: 1; image-rendering: pixelated; }
-        
-        /* HUD del juego */
-        #hud { position: absolute; top: 20px; left: 20px; right: 20px; display: none; justify-content: space-between; z-index: 5; pointer-events: none; }
-        .lives { display: flex; gap: 10px; }
-        .lives img { width: 25px; height: 25px; }
-    </style>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
