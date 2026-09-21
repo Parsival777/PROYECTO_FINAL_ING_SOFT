@@ -1,40 +1,315 @@
-@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
 
-* { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Press Start 2P', cursive; }
-body { background-color: #050510; color: white; overflow: hidden; display: flex; justify-content: center; align-items: center; height: 100vh; }
+/* ============================================
+   TOKENS - Paleta "gabinete arcade / CRT espacial"
+   ============================================ */
+:root {
+    --void: #06040f;
+    --nebula: #150c2e;
+    --cabinet: #241a3d;
+    --cabinet-edge: #0d0819;
+    --cabinet-bolt: #3a2c5c;
 
-.screen { display: none; flex-direction: column; align-items: center; justify-content: center; width: 100%; height: 100%; position: absolute; top: 0; left: 0; background: radial-gradient(circle, #1a1a2e 0%, #000000 100%); z-index: 10; }
+    --phosphor-cyan: #4deeea;
+    --phosphor-green: #39ff88;
+    --phosphor-magenta: #f74dfa;
+    --alert-coral: #ff5d73;
+    --signal-gold: #ffc93c;
+
+    --rarity-common: #9a94b8;
+    --rarity-epic: #b34dff;
+    --rarity-legendary: #ffb037;
+
+    --starlight: #f1eefc;
+    --dim-static: #8f89ad;
+
+    --font-display: 'Press Start 2P', cursive;
+    --font-body: 'VT323', monospace;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html {
+    position: relative;
+    background: var(--void);
+}
+
+/* Líneas de escaneo CRT sobre toda la ventana */
+html::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 997;
+    pointer-events: none;
+    background: repeating-linear-gradient(
+        180deg,
+        rgba(0,0,0,0.22) 0px,
+        rgba(0,0,0,0.22) 1px,
+        transparent 2px,
+        transparent 4px
+    );
+    mix-blend-mode: multiply;
+    opacity: 0.55;
+}
+
+body {
+    font-family: var(--font-body);
+    background:
+        radial-gradient(ellipse at 20% 15%, rgba(77,238,234,0.06) 0%, transparent 45%),
+        radial-gradient(ellipse at 80% 85%, rgba(247,77,250,0.06) 0%, transparent 45%),
+        var(--void);
+    color: var(--starlight);
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    position: relative;
+    font-size: 1.15rem;
+    line-height: 1.5;
+
+    /* Marco de gabinete + viñeta, sin tocar el HTML */
+    box-shadow:
+        inset 0 0 0 10px var(--cabinet),
+        inset 0 0 0 13px var(--cabinet-edge),
+        inset 0 0 140px 50px rgba(0,0,0,0.9);
+}
+
+/* Remaches metálicos en las 4 esquinas del gabinete */
+body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 998;
+    pointer-events: none;
+    background:
+        radial-gradient(circle at 21px 21px, var(--cabinet-edge) 38%, var(--cabinet-bolt) 42%, transparent 62%) top left / 42px 42px no-repeat,
+        radial-gradient(circle at 21px 21px, var(--cabinet-edge) 38%, var(--cabinet-bolt) 42%, transparent 62%) top right / 42px 42px no-repeat,
+        radial-gradient(circle at 21px 21px, var(--cabinet-edge) 38%, var(--cabinet-bolt) 42%, transparent 62%) bottom left / 42px 42px no-repeat,
+        radial-gradient(circle at 21px 21px, var(--cabinet-edge) 38%, var(--cabinet-bolt) 42%, transparent 62%) bottom right / 42px 42px no-repeat;
+}
+
+/* ============================================
+   PANTALLAS
+   ============================================ */
+.screen {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 0; left: 0;
+    background:
+        radial-gradient(circle at 50% 30%, var(--nebula) 0%, var(--void) 70%);
+    z-index: 10;
+    padding: 20px;
+    overflow-y: auto;
+    animation: crt-breathe 6s ease-in-out infinite;
+}
 .active { display: flex; }
 
-h1 { color: #00ffff; text-shadow: 0 0 10px #00ffff; margin-bottom: 30px; text-align: center; font-size: 24px; line-height: 1.5; }
-h2 { color: #ffd700; margin-bottom: 20px; font-size: 16px; }
-p { margin-bottom: 15px; font-size: 12px; line-height: 1.5; text-align: center; }
+@keyframes crt-breathe {
+    0%, 100% { filter: brightness(1); }
+    50% { filter: brightness(1.035); }
+}
 
+/* ============================================
+   TIPOGRAFÍA
+   ============================================ */
+h1 {
+    font-family: var(--font-display);
+    color: var(--phosphor-cyan);
+    text-shadow:
+        -2px 0 var(--phosphor-magenta),
+        2px 0 var(--phosphor-cyan),
+        0 0 18px rgba(77,238,234,0.5);
+    margin-bottom: 20px;
+    text-align: center;
+    font-size: clamp(18px, 4vw, 30px);
+    line-height: 1.8;
+    letter-spacing: 1px;
+}
+
+h1::after {
+    content: "";
+    display: block;
+    width: 120px;
+    height: 4px;
+    margin: 18px auto 0;
+    background: repeating-linear-gradient(
+        90deg,
+        var(--phosphor-magenta) 0 10px,
+        var(--phosphor-cyan) 10px 20px
+    );
+}
+
+h2 {
+    font-family: var(--font-body);
+    color: var(--signal-gold);
+    letter-spacing: 1px;
+    margin-bottom: 18px;
+    font-size: 1.5rem;
+    text-shadow: 0 0 8px rgba(255,201,60,0.35);
+}
+
+p {
+    margin-bottom: 15px;
+    font-size: 1.15rem;
+    line-height: 1.5;
+    text-align: center;
+    color: var(--dim-static);
+}
+
+/* ============================================
+   FORMULARIOS
+   ============================================ */
 .form-group { margin-bottom: 20px; text-align: center; }
-input { background: #000; border: 2px solid #00ffff; color: #fff; padding: 15px; font-size: 14px; width: 300px; text-align: center; outline: none; margin-bottom: 10px; font-family: inherit; }
-input:focus { border-color: #ff00ff; box-shadow: 0 0 15px #ff00ff; }
 
-button { background: transparent; border: 2px solid #00ff00; color: #00ff00; padding: 15px 30px; cursor: pointer; font-size: 14px; text-transform: uppercase; margin: 10px; transition: 0.3s; font-family: inherit; }
-button:hover { background: #00ff00; color: #000; box-shadow: 0 0 15px #00ff00; }
-.btn-alt { border-color: #ff00ff; color: #ff00ff; }
-.btn-alt:hover { background: #ff00ff; color: #000; box-shadow: 0 0 15px #ff00ff; }
-.btn-danger { border-color: #ff0000; color: #ff0000; }
-.btn-danger:hover { background: #ff0000; color: #fff; box-shadow: 0 0 15px #ff0000; }
+input {
+    background: var(--cabinet-edge);
+    border: 2px solid var(--phosphor-cyan);
+    color: var(--starlight);
+    padding: 14px 16px;
+    font-size: 1.2rem;
+    width: 300px;
+    max-width: 80vw;
+    text-align: center;
+    outline: none;
+    margin-bottom: 12px;
+    font-family: var(--font-body);
+    border-radius: 0;
+    box-shadow: 3px 3px 0 0 rgba(0,0,0,0.5);
+}
+input::placeholder { color: var(--dim-static); }
+input:focus {
+    border-color: var(--phosphor-magenta);
+    box-shadow: 0 0 14px var(--phosphor-magenta), 3px 3px 0 0 rgba(0,0,0,0.5);
+}
 
-.error { color: #ff0000; min-height: 20px; margin-top: 10px; }
+/* ============================================
+   BOTONES - bisel duro estilo botón de arcade
+   ============================================ */
+button {
+    background: var(--cabinet-edge);
+    border: 2px solid var(--phosphor-green);
+    color: var(--phosphor-green);
+    padding: 14px 28px;
+    cursor: pointer;
+    font-size: 1.1rem;
+    letter-spacing: 0.5px;
+    margin: 8px;
+    font-family: var(--font-body);
+    border-radius: 0;
+    box-shadow: 4px 4px 0 0 rgba(0,0,0,0.6);
+    transition: transform 0.12s, box-shadow 0.12s, background 0.12s, color 0.12s;
+}
+button:hover {
+    background: var(--phosphor-green);
+    color: var(--cabinet-edge);
+    box-shadow: 4px 4px 0 0 rgba(0,0,0,0.6), 0 0 16px var(--phosphor-green);
+}
+button:active {
+    transform: translate(3px, 3px);
+    box-shadow: 1px 1px 0 0 rgba(0,0,0,0.6);
+}
+button:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+    transform: none;
+}
 
-/* Tienda Grid */
-.shop-grid { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; max-width: 900px; }
-.card { background: #111; border: 3px solid #555; padding: 20px; text-align: center; width: 250px; border-radius: 10px; transition: 0.3s; }
-.card img { width: 80px; height: 80px; image-rendering: pixelated; margin-bottom: 15px; }
-.card.common { border-color: #999; }
-.card.epic { border-color: #a335ee; box-shadow: 0 0 15px #a335ee; }
-.card.legendary { border-color: #ff8000; box-shadow: 0 0 15px #ff8000; }
-.card.equipped { background: #222; border-color: #00ff00; box-shadow: 0 0 20px #00ff00; }
+.btn-alt { border-color: var(--phosphor-magenta); color: var(--phosphor-magenta); }
+.btn-alt:hover { background: var(--phosphor-magenta); color: var(--cabinet-edge); box-shadow: 4px 4px 0 0 rgba(0,0,0,0.6), 0 0 16px var(--phosphor-magenta); }
 
-canvas { display: none; background: #000; z-index: 1; image-rendering: pixelated; }
+.btn-danger { border-color: var(--alert-coral); color: var(--alert-coral); }
+.btn-danger:hover { background: var(--alert-coral); color: var(--cabinet-edge); box-shadow: 4px 4px 0 0 rgba(0,0,0,0.6), 0 0 16px var(--alert-coral); }
+
+.error { color: var(--alert-coral); min-height: 20px; margin-top: 10px; font-size: 1.15rem; }
+
+/* ============================================
+   TIENDA - grid y cards con bisel pixel-art
+   ============================================ */
+.shop-grid { display: flex; gap: 24px; flex-wrap: wrap; justify-content: center; max-width: 900px; }
+
+.card {
+    background: var(--nebula);
+    border: none;
+    border-radius: 0;
+    padding: 22px;
+    text-align: center;
+    width: 240px;
+    color: var(--starlight);
+    box-shadow:
+        0 0 0 3px var(--cabinet-edge),
+        0 0 0 6px var(--rarity-color, var(--rarity-common)),
+        6px 6px 0 0 rgba(0,0,0,0.55);
+    transition: transform 0.15s;
+}
+.card:hover { transform: translateY(-4px); }
+
+.card img { width: 76px; height: 76px; image-rendering: pixelated; margin-bottom: 14px; }
+
+.card.common { --rarity-color: var(--rarity-common); }
+.card.epic { --rarity-color: var(--rarity-epic); }
+.card.epic { box-shadow: 0 0 0 3px var(--cabinet-edge), 0 0 0 6px var(--rarity-epic), 6px 6px 0 0 rgba(0,0,0,0.55), 0 0 20px rgba(179,77,255,0.35); }
+.card.legendary { --rarity-color: var(--rarity-legendary); }
+.card.legendary { box-shadow: 0 0 0 3px var(--cabinet-edge), 0 0 0 6px var(--rarity-legendary), 6px 6px 0 0 rgba(0,0,0,0.55), 0 0 22px rgba(255,176,55,0.4); }
+
+.card.equipped {
+    background: var(--cabinet);
+    box-shadow:
+        0 0 0 3px var(--cabinet-edge),
+        0 0 0 6px var(--phosphor-green),
+        6px 6px 0 0 rgba(0,0,0,0.55),
+        0 0 22px rgba(57,255,136,0.45);
+}
+
+.card h3 { font-family: var(--font-body); font-size: 1.3rem; margin-bottom: 8px; color: var(--starlight); }
+.card p { color: var(--starlight); margin-bottom: 14px; font-size: 1.1rem; }
+
+/* ============================================
+   CANVAS DEL JUEGO
+   ============================================ */
+canvas {
+    display: none;
+    background: var(--void);
+    z-index: 1;
+    image-rendering: pixelated;
+    max-width: 96vw;
+    max-height: 90vh;
+    box-shadow: 0 0 40px rgba(77,238,234,0.15);
+}
 
 /* HUD del juego */
-#hud { position: absolute; top: 20px; left: 20px; right: 20px; display: none; justify-content: space-between; z-index: 5; pointer-events: none; }
-.lives { display: flex; gap: 10px; }
+#hud {
+    position: absolute;
+    top: 20px; left: 20px; right: 20px;
+    display: none;
+    justify-content: space-between;
+    z-index: 5;
+    pointer-events: none;
+    font-family: var(--font-body);
+    font-size: 1.4rem;
+    color: var(--phosphor-cyan);
+    text-shadow: 0 0 8px rgba(77,238,234,0.6), 2px 2px 0 #000;
+}
+.lives { display: flex; gap: 10px; align-items: center; }
 .lives img { width: 25px; height: 25px; }
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+@media (max-width: 640px) {
+    body {
+        box-shadow:
+            inset 0 0 0 6px var(--cabinet),
+            inset 0 0 0 8px var(--cabinet-edge),
+            inset 0 0 90px 30px rgba(0,0,0,0.9);
+        font-size: 1rem;
+    }
+    body::after { background-size: 26px 26px; }
+    input { width: 260px; }
+    .card { width: 100%; max-width: 260px; }
+}
