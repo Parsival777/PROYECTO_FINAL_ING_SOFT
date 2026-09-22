@@ -19,7 +19,7 @@
             <button id="btn-login">Iniciar Sesión</button>
             <button id="btn-register" class="btn-alt">Registrarse</button>
         </div>
-        <button id="btn-guest" class="btn-danger" style="margin-top: 30px; font-size: 10px;">Entrar como Invitado</button>
+        <button id="btn-guest" class="btn-danger" style="margin-top: 30px; font-size: 16px;">Entrar como Invitado</button>
         <p id="auth-msg" class="error"></p>
     </div>
 
@@ -77,7 +77,7 @@
     <!-- PANTALLA ADVERTENCIA ABANDONO -->
     <div id="exit-warning-screen" class="screen" style="background: rgba(20,0,0,0.95); z-index: 30;">
         <h1 style="color: #ff0000; font-size: 30px;">¡ADVERTENCIA!</h1>
-        <p style="font-size: 14px; margin-bottom: 30px;">Si abandonas la misión ahora, perderás todo<br>tu progreso y no recibirás monedas.</p>
+        <p style="font-size: 18px; margin-bottom: 30px;">Si abandonas la misión ahora, perderás todo<br>tu progreso y no recibirás monedas.</p>
         <button id="btn-confirm-exit" class="btn-danger">Abandonar Misión</button>
         <button id="btn-cancel-exit" class="btn-alt">Cancelar y Reanudar</button>
     </div>
@@ -93,17 +93,17 @@
     <div id="edit-modal" style="display: none; flex-direction: column; align-items: center; justify-content: center; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 50;">
         <div style="background: #111; border: 3px solid #ff8000; padding: 30px; border-radius: 10px; text-align: center; box-shadow: 0 0 20px #ff8000;">
             <h2 style="color: #ff8000; margin-bottom: 20px;">MODIFICAR PILOTO</h2>
-            <p id="edit-modal-user" style="color: #00ffff; margin-bottom: 20px; font-size: 14px;">Piloto: ---</p>
+            <p id="edit-modal-user" style="color: #00ffff; margin-bottom: 20px; font-size: 18px;">Piloto: ---</p>
             
             <div class="form-group" style="text-align: left; width: 250px; margin: 0 auto;">
-                <label style="color: #fff; font-size: 10px; display: block; margin-bottom: 8px;">Rol del sistema:</label>
-                <select id="edit-role" style="background: #000; border: 2px solid #ff00ff; color: #fff; padding: 15px; width: 100%; margin-bottom: 20px; outline: none; cursor: pointer; font-family: inherit; font-size: 12px;">
+                <label style="color: #fff; font-size: 15px; display: block; margin-bottom: 8px;">Rol del sistema:</label>
+                <select id="edit-role" style="background: #000; border: 2px solid #ff00ff; color: #fff; padding: 15px; width: 100%; margin-bottom: 20px; outline: none; cursor: pointer; font-family: inherit; font-size: 16px;">
                     <option value="usuario">Usuario</option>
                     <option value="admin">Administrador</option>
                 </select>
 
-                <label style="color: #fff; font-size: 10px; display: block; margin-bottom: 8px;">Billetera (Monedas):</label>
-                <input type="number" id="edit-coins" min="0" style="background: #000; border: 2px solid #00ffff; color: #fff; padding: 15px; width: 100%; outline: none; margin-bottom: 30px; font-family: inherit; font-size: 12px; text-align: center;">
+                <label style="color: #fff; font-size: 15px; display: block; margin-bottom: 8px;">Billetera (Monedas):</label>
+                <input type="number" id="edit-coins" min="0" style="background: #000; border: 2px solid #00ffff; color: #fff; padding: 15px; width: 100%; outline: none; margin-bottom: 30px; font-family: inherit; font-size: 16px; text-align: center;">
             </div>
 
             <div style="display: flex; gap: 15px; justify-content: center;">
@@ -117,7 +117,7 @@
     <div id="delete-modal" style="display: none; flex-direction: column; align-items: center; justify-content: center; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(20,0,0,0.9); z-index: 50;">
         <div style="background: #111; border: 3px solid #ff0000; padding: 30px; border-radius: 10px; text-align: center; box-shadow: 0 0 20px #ff0000;">
             <h2 style="color: #ff0000; margin-bottom: 20px;">¿ELIMINAR PILOTO?</h2>
-            <p id="delete-modal-user" style="color: #fff; margin-bottom: 30px; font-size: 12px;">Esta acción es irreversible.</p>
+            <p id="delete-modal-user" style="color: #fff; margin-bottom: 30px; font-size: 18px;">Esta acción es irreversible.</p>
             <div style="display: flex; gap: 15px; justify-content: center;">
                 <button id="btn-confirm-delete" class="btn-danger" style="margin: 0;">Eliminar</button>
                 <button id="btn-cancel-delete" class="btn-alt" style="margin: 0;">Cancelar</button>
