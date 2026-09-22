@@ -459,24 +459,24 @@ document.getElementById("btn-back-admin-lobby").onclick = enterLobby;
 
 async function loadAdminUsers() {
     const list = document.getElementById("admin-users-list");
-    list.innerHTML = "<p>Cargando usuarios...</p>";
+    list.innerHTML = "<p style='font-size: 13px;'>Cargando usuarios...</p>";
     const res = await apiCall("/admin/users");
     
     if (res.status === 200) {
         list.innerHTML = "";
         res.data.forEach(u => {
             list.innerHTML += `
-                <div style="display:flex; justify-content:space-between; margin-bottom:10px; border-bottom:1px solid #444; padding-bottom:5px;">
-                    <span>ID:${u.id} | ${u.username} | Monedas: ${u.coins} | Rol: ${u.role}</span>
-                    <div>
-                        <button onclick="editUser(${u.id}, '${u.username}', '${u.role}', ${u.coins})" style="padding: 5px; font-size:10px; margin:0;" class="btn-alt">Editar</button>
-                        <button onclick="deleteUser(${u.id}, '${u.username}')" style="padding: 5px; font-size:10px; margin:0;" class="btn-danger">Borrar</button>
+                <div style="display:flex; justify-content:space-between; align-items: center; margin-bottom:15px; border-bottom:1px solid #444; padding-bottom:12px;">
+                    <span style="font-size: 13px; line-height: 1.5; color: #fff;">${u.username} | Monedas: ${u.coins} | Rol: ${u.role}</span>
+                    <div style="display: flex; gap: 10px;">
+                        <button onclick="editUser(${u.id}, '${u.username}', '${u.role}', ${u.coins})" style="padding: 8px 12px; font-size: 11px; margin:0;" class="btn-alt">Editar</button>
+                        <button onclick="deleteUser(${u.id}, '${u.username}')" style="padding: 8px 12px; font-size: 11px; margin:0;" class="btn-danger">Borrar</button>
                     </div>
                 </div>
             `;
         });
     } else {
-        list.innerHTML = "<p style='color:red;'>Error al cargar. ¿Eres admin?</p>";
+        list.innerHTML = "<p style='color:red; font-size: 13px;'>Error al cargar. ¿Eres admin?</p>";
     }
 }
 
