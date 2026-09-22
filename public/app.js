@@ -335,29 +335,6 @@ class Enemy {
     }
 }
 
-document.getElementById("btn-play").onclick = () => {
-    showScreen(null); 
-    canvas.style.display = "block";
-    document.getElementById("hud").style.display = "flex";
-    
-    player = new Player(state.currentSkin);
-    bullets = []; enemies = []; enemyBullets = []; score = 0;
-    
-    for(let row=0; row<3; row++) {
-        for(let col=0; col<7; col++) enemies.push(new Enemy(col, row));
-    }
-    
-    starsArr = Array.from({length: 100}, () => ({
-        x: Math.random() * canvas.width, y: Math.random() * canvas.height,
-        s: 1 + Math.random() * 4, size: 1 + Math.random() * 2
-    }));
-
-    gameActive = true;
-    isPaused = false;
-    lastTime = performance.now(); 
-    gameLoop();
-};
-
 function checkCollision(r1, r2) {
     return r1.x < r2.x + r2.w && r1.x + r1.w > r2.x && r1.y < r2.y + r2.h && r1.y + r1.h > r2.y;
 }
@@ -492,8 +469,8 @@ async function loadAdminUsers() {
                 <div style="display:flex; justify-content:space-between; margin-bottom:10px; border-bottom:1px solid #444; padding-bottom:5px;">
                     <span>ID:${u.id} | ${u.username} | Monedas: ${u.coins} | Rol: ${u.role}</span>
                     <div>
-                        <button onclick="editUser(${u.id}, '${u.role}', ${u.coins})" style="padding: 5px; font-size:10px; margin:0;" class="btn-alt">Editar</button>
-                        <button onclick="deleteUser(${u.id})" style="padding: 5px; font-size:10px; margin:0;" class="btn-danger">Borrar</button>
+                        <button onclick="editUser(${u.id}, '${u.username}', '${u.role}', ${u.coins})" style="padding: 5px; font-size:10px; margin:0;" class="btn-alt">Editar</button>
+                        <button onclick="deleteUser(${u.id}, '${u.username}')" style="padding: 5px; font-size:10px; margin:0;" class="btn-danger">Borrar</button>
                     </div>
                 </div>
             `;
@@ -503,18 +480,61 @@ async function loadAdminUsers() {
     }
 }
 
-async function deleteUser(id) {
-    if(confirm("¿Seguro que deseas eliminar este usuario?")) {
-        await apiCall(`/admin/users/${id}`, "DELETE");
-        loadAdminUsers();
-    }
+let editingUserId = null;
+
+function editUser(id, username, currentRole, currentCoins) {
+    editingUserId = id;
+    document.getElementById("edit-modal-user").innerText = `Piloto: ${username}`;
+    document.getElementById("edit-role").value = currentRole;
+    document.getElementById("edit-coins").value = currentCoins;
+    document.getElementById("edit-modal").style.display = "flex";
 }
 
-async function editUser(id, currentRole, currentCoins) {
-    const newRole = prompt("Nuevo rol (usuario/admin):", currentRole);
-    const newCoins = prompt("Cantidad de monedas:", currentCoins);
-    if(newRole && newCoins !== null) {
-        await apiCall(`/admin/users/${id}`, "PUT", { role: newRole, coins: parseInt(newCoins) });
+document.getElementById("btn-cancel-edit").onclick = () => {
+    document.getElementById("edit-modal").style.display = "none";
+    editingUserId = null;
+};
+
+document.getElementById("btn-save-edit").onclick = async () => {
+    if (!editingUserId) return;
+    
+    const newRole = document.getElementById("edit-role").value;
+    const newCoins = parseInt(document.getElementById("edit-coins").value);
+    
+    if(isNaN(newCoins) || newCoins < 0) {
+        document.getElementById("edit-modal-user").innerText = "⚠️ Cantidad de monedas inválida";
+        document.getElementById("edit-modal-user").style.color = "#ff0000";
+        return;
+    }
+    
+    const res = await apiCall(`/admin/users/${editingUserId}`, "PUT", { role: newRole, coins: newCoins });
+    if (res.status === 200) {
+        document.getElementById("edit-modal").style.display = "none";
+        document.getElementById("edit-modal-user").style.color = "#00ffff";
+        editingUserId = null;
+        loadAdminUsers(); 
+    }
+};
+
+let deletingUserId = null;
+
+function deleteUser(id, username) {
+    deletingUserId = id;
+    document.getElementById("delete-modal-user").innerText = `Se eliminará permanentemente a: ${username}`;
+    document.getElementById("delete-modal").style.display = "flex";
+}
+
+document.getElementById("btn-cancel-delete").onclick = () => {
+    document.getElementById("delete-modal").style.display = "none";
+    deletingUserId = null;
+};
+
+document.getElementById("btn-confirm-delete").onclick = async () => {
+    if (!deletingUserId) return;
+    const res = await apiCall(`/admin/users/${deletingUserId}`, "DELETE");
+    if (res.status === 200) {
+        document.getElementById("delete-modal").style.display = "none";
+        deletingUserId = null;
         loadAdminUsers();
     }
-}
+};

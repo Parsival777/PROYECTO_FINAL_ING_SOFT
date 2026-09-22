@@ -89,6 +89,42 @@
         <button id="btn-back-admin-lobby" class="btn-danger">Volver al Lobby</button>
     </div>
 
+    <!-- MODAL DE EDICIÓN DE USUARIO -->
+    <div id="edit-modal" style="display: none; flex-direction: column; align-items: center; justify-content: center; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 50;">
+        <div style="background: #111; border: 3px solid #ff8000; padding: 30px; border-radius: 10px; text-align: center; box-shadow: 0 0 20px #ff8000;">
+            <h2 style="color: #ff8000; margin-bottom: 20px;">MODIFICAR PILOTO</h2>
+            <p id="edit-modal-user" style="color: #00ffff; margin-bottom: 20px; font-size: 14px;">Piloto: ---</p>
+            
+            <div class="form-group" style="text-align: left; width: 250px; margin: 0 auto;">
+                <label style="color: #fff; font-size: 10px; display: block; margin-bottom: 8px;">Rol del sistema:</label>
+                <select id="edit-role" style="background: #000; border: 2px solid #ff00ff; color: #fff; padding: 15px; width: 100%; margin-bottom: 20px; outline: none; cursor: pointer; font-family: inherit; font-size: 12px;">
+                    <option value="usuario">Usuario</option>
+                    <option value="admin">Administrador</option>
+                </select>
+
+                <label style="color: #fff; font-size: 10px; display: block; margin-bottom: 8px;">Billetera (Monedas):</label>
+                <input type="number" id="edit-coins" min="0" style="background: #000; border: 2px solid #00ffff; color: #fff; padding: 15px; width: 100%; outline: none; margin-bottom: 30px; font-family: inherit; font-size: 12px; text-align: center;">
+            </div>
+
+            <div style="display: flex; gap: 15px; justify-content: center;">
+                <button id="btn-save-edit" style="border-color: #00ff00; color: #00ff00; margin: 0;">Guardar</button>
+                <button id="btn-cancel-edit" class="btn-danger" style="margin: 0;">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DE CONFIRMACIÓN DE BORRADO -->
+    <div id="delete-modal" style="display: none; flex-direction: column; align-items: center; justify-content: center; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(20,0,0,0.9); z-index: 50;">
+        <div style="background: #111; border: 3px solid #ff0000; padding: 30px; border-radius: 10px; text-align: center; box-shadow: 0 0 20px #ff0000;">
+            <h2 style="color: #ff0000; margin-bottom: 20px;">¿ELIMINAR PILOTO?</h2>
+            <p id="delete-modal-user" style="color: #fff; margin-bottom: 30px; font-size: 12px;">Esta acción es irreversible.</p>
+            <div style="display: flex; gap: 15px; justify-content: center;">
+                <button id="btn-confirm-delete" class="btn-danger" style="margin: 0;">Eliminar</button>
+                <button id="btn-cancel-delete" class="btn-alt" style="margin: 0;">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
     <!-- HUD DURANTE EL JUEGO -->
     <div id="hud">
         <div class="lives" id="lives-container"></div>

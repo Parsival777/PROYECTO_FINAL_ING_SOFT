@@ -12,7 +12,7 @@ const PORT = process.env.PORT || 3000;
 app.use(cors()); 
 app.use(express.json());
 
-// Bloqueo estricto de caché para evitar que Chrome guarde versiones viejas
+// Bloqueo estricto de caché para evitar que el navegador guarde versiones viejas
 app.use(express.static(path.join(__dirname, 'public'), { 
     acceptRanges: false,
     etag: false,
