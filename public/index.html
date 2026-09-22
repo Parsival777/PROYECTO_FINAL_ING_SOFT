@@ -10,39 +10,37 @@
 
     <!-- PANTALLA LOGIN / REGISTRO -->
     <div id="auth-screen" class="screen active">
-        <h1 id="auth-title">POWER GALAGA</h1>
+        <h1 id="auth-title">🛸 GALAGA SAAS 🛸<br>TERMINAL DE ACCESO</h1>
         <div class="form-group">
-            <input type="text" id="username" placeholder="Nombre de Piloto" autocomplete="off"><br>
-            <div class="password-wrapper">
-                <input type="password" id="password" placeholder="Contraseña">
-                <button type="button" id="btn-toggle-password" class="toggle-password" aria-label="Mostrar contraseña">👁</button>
-            </div>
+            <input type="text" id="username" placeholder="Piloto" autocomplete="off"><br>
+            <input type="password" id="password" placeholder="Contraseña">
         </div>
         <div>
             <button id="btn-login">Iniciar Sesión</button>
             <button id="btn-register" class="btn-alt">Registrarse</button>
         </div>
-        <button id="btn-guest" class="btn-danger" style="margin-top: 30px;">Entrar como Invitado</button>
+        <button id="btn-guest" class="btn-danger" style="margin-top: 30px; font-size: 10px;">Entrar como Invitado</button>
         <p id="auth-msg" class="error"></p>
     </div>
 
     <!-- PANTALLA LOBBY -->
     <div id="lobby-screen" class="screen">
-        <h1>--- Crew Lounge ---</h1>
+        <h1>--- LOBBY DE PILOTOS ---</h1>
         <h2 id="lobby-user">Piloto: ---</h2>
-        <h2 id="lobby-coins" style="color:#ffd700;">Saldo: 0 🪙</h2>
+        <h2 id="lobby-coins" style="color:#ffd700;">Billetera: 0 🪙</h2>
         <p id="lobby-skin" style="color:#aaa;">Nave Actual: ---</p>
         
         <div style="margin-top: 40px; display: flex; flex-direction: column; gap: 15px;">
             <button id="btn-play">Iniciar Misión</button>
             <button id="btn-shop" class="btn-alt">Tienda y Locker</button>
+            <button id="btn-admin-panel" class="btn-alt" style="display: none; border-color: #ff8000; color: #ff8000;">Panel de Admin</button>
             <button id="btn-logout" class="btn-danger">Cerrar Sesión</button>
         </div>
     </div>
 
     <!-- PANTALLA TIENDA / LOCKER -->
     <div id="shop-screen" class="screen">
-        <h1 id="shop-title"> TIENDA INTERGALÁCTICA </h1>
+        <h1 id="shop-title">🏪 TIENDA Y LOCKER 🏪</h1>
         <h2 id="shop-coins" style="color:#ffd700;">Tus Monedas: 0 🪙</h2>
         
         <div class="shop-grid" id="shop-container">
@@ -69,14 +67,35 @@
         <button id="btn-return-lobby">Volver al Lobby</button>
     </div>
 
-    <!-- CONTENEDOR DEL JUEGO: el HUD queda anclado al canvas, no a toda la página -->
-    <div id="game-wrapper">
-        <div id="hud">
-            <div class="lives" id="lives-container"></div>
-            <div id="score-display">SCORE: 0</div>
-        </div>
-        <canvas id="gameCanvas" width="800" height="600"></canvas>
+    <!-- PANTALLA PAUSA -->
+    <div id="pause-screen" class="screen" style="background: rgba(0,0,0,0.8); z-index: 20;">
+        <h1 style="color: #ffff00;">JUEGO EN PAUSA</h1>
+        <button id="btn-resume">Reanudar</button>
+        <button id="btn-exit-warning" class="btn-danger">Volver al Lobby</button>
     </div>
+
+    <!-- PANTALLA ADVERTENCIA ABANDONO -->
+    <div id="exit-warning-screen" class="screen" style="background: rgba(20,0,0,0.95); z-index: 30;">
+        <h1 style="color: #ff0000; font-size: 30px;">¡ADVERTENCIA!</h1>
+        <p style="font-size: 14px; margin-bottom: 30px;">Si abandonas la misión ahora, perderás todo<br>tu progreso y no recibirás monedas.</p>
+        <button id="btn-confirm-exit" class="btn-danger">Abandonar Misión</button>
+        <button id="btn-cancel-exit" class="btn-alt">Cancelar y Reanudar</button>
+    </div>
+
+    <!-- PANTALLA DASHBOARD ADMIN -->
+    <div id="admin-screen" class="screen">
+        <h1 style="color: #ff8000;">🛡️ PANEL DE ADMINISTRADOR 🛡️</h1>
+        <div id="admin-users-list" style="width: 80%; max-width: 600px; background: #111; padding: 20px; border-radius: 10px; border: 2px solid #555; overflow-y: auto; max-height: 300px; margin-bottom: 20px;"></div>
+        <button id="btn-back-admin-lobby" class="btn-danger">Volver al Lobby</button>
+    </div>
+
+    <!-- HUD DURANTE EL JUEGO -->
+    <div id="hud">
+        <div class="lives" id="lives-container"></div>
+        <div id="score-display">SCORE: 0</div>
+    </div>
+
+    <canvas id="gameCanvas" width="800" height="600"></canvas>
 
     <script src="app.js"></script>
 </body>

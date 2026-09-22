@@ -44,6 +44,11 @@ const authenticateToken = (req, res, next) => {
     });
 };
 
+const verifyAdmin = (req, res, next) => {
+    if (req.user.role !== 'admin') return res.status(403).json({ error: 'Se requiere rol de administrador.' });
+    next();
+};
+
 app.post('/api/register', async (req, res) => {
     try {
         const { username, password } = req.body;
@@ -85,7 +90,7 @@ app.post('/api/score', authenticateToken, async (req, res) => {
 
 app.get('/api/me', authenticateToken, async (req, res) => {
     try {
-        const [rows] = await pool.execute('SELECT username, coins, current_skin, owned_skins FROM users WHERE id = ?', [req.user.id]);
+        const [rows] = await pool.execute('SELECT username, coins, current_skin, owned_skins, role FROM users WHERE id = ?', [req.user.id]);
         if (rows.length === 0) return res.status(404).json({ error: 'No encontrado' });
         res.status(200).json(rows[0]);
     } catch (error) {
@@ -134,6 +139,29 @@ app.get('/api/leaderboard', async (req, res) => {
     } catch (error) {
         res.status(500).json({ error: 'Error.' });
     }
+});
+
+// --- RUTAS CRUD PARA ADMINISTRADORES ---
+app.get('/api/admin/users', authenticateToken, verifyAdmin, async (req, res) => {
+    try {
+        const [rows] = await pool.execute('SELECT id, username, role, coins FROM users');
+        res.json(rows);
+    } catch (error) { res.status(500).json({ error: 'Error del servidor.' }); }
+});
+
+app.put('/api/admin/users/:id', authenticateToken, verifyAdmin, async (req, res) => {
+    try {
+        const { role, coins } = req.body;
+        await pool.execute('UPDATE users SET role = ?, coins = ? WHERE id = ?', [role, coins, req.params.id]);
+        res.json({ message: 'Usuario actualizado.' });
+    } catch (error) { res.status(500).json({ error: 'Error al actualizar.' }); }
+});
+
+app.delete('/api/admin/users/:id', authenticateToken, verifyAdmin, async (req, res) => {
+    try {
+        await pool.execute('DELETE FROM users WHERE id = ?', [req.params.id]);
+        res.json({ message: 'Usuario eliminado.' });
+    } catch (error) { res.status(500).json({ error: 'Error al eliminar.' }); }
 });
 
 app.get(/.*/, (req, res) => {

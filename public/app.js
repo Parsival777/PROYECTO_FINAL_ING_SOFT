@@ -1,7 +1,7 @@
 const API_URL = "/api";
 let state = {
     token: null, user: "Invitado", coins: 0, 
-    currentSkin: "player_default", ownedSkins: ["player_default"]
+    currentSkin: "player_default", ownedSkins: ["player_default"], role: "usuario"
 };
 
 const CATALOG = [
@@ -31,14 +31,19 @@ async function loadProfile() {
         state.coins = res.data.coins || 0;
         state.currentSkin = res.data.current_skin || "player_default";
         state.ownedSkins = res.data.owned_skins ? res.data.owned_skins.split(',') : ["player_default"];
+        state.role = res.data.role || "usuario";
+        
+        const adminBtn = document.getElementById("btn-admin-panel");
+        if(adminBtn) adminBtn.style.display = state.role === "admin" ? "block" : "none";
     }
 }
 
-const screens = ["auth-screen", "lobby-screen", "shop-screen", "gameover-screen"];
+const screens = ["auth-screen", "lobby-screen", "shop-screen", "gameover-screen", "pause-screen", "exit-warning-screen", "admin-screen"];
 
 function showScreen(id) {
     screens.forEach(s => document.getElementById(s).classList.remove("active"));
-    document.getElementById("game-wrapper").style.display = "none";
+    canvas.style.display = "none";
+    document.getElementById("hud").style.display = "none";
     if(id) document.getElementById(id).classList.add("active");
 }
 
@@ -69,20 +74,6 @@ document.getElementById("btn-guest").onclick = () => {
     state.token = null; state.user = "Invitado"; enterLobby();
 };
 
-document.getElementById("btn-toggle-password").onclick = () => {
-    const pwd = document.getElementById("password");
-    const btn = document.getElementById("btn-toggle-password");
-    if (pwd.type === "password") {
-        pwd.type = "text";
-        btn.textContent = "🙈";
-        btn.setAttribute("aria-label", "Ocultar contraseña");
-    } else {
-        pwd.type = "password";
-        btn.textContent = "👁";
-        btn.setAttribute("aria-label", "Mostrar contraseña");
-    }
-};
-
 document.getElementById("btn-logout").onclick = () => {
     state.token = null; document.getElementById("username").value = ""; document.getElementById("password").value = "";
     showScreen("auth-screen"); msg("auth-msg", "");
@@ -104,10 +95,9 @@ async function enterLobby() {
 document.getElementById("btn-shop").onclick = () => renderShop();
 document.getElementById("btn-back-lobby").onclick = enterLobby;
 
-// Lógica de Tienda y Locker unificada
 async function renderShop() {
     showScreen("shop-screen");
-    document.getElementById("shop-title").innerText = " TIENDA Y LOCKER ";
+    document.getElementById("shop-title").innerText = "🏪 TIENDA Y LOCKER 🏪";
     document.getElementById("shop-coins").innerText = `Tus Monedas: ${state.coins} 🪙`;
     msg("shop-msg", "");
 
@@ -150,7 +140,6 @@ async function handleItemClick(id, price, isOwned) {
     if(!state.token) return msg("shop-msg", "Regístrate para usar la tienda.");
     
     if (!isOwned) {
-        // Flujo de compra
         const res = await apiCall("/shop", "POST", { skin_name: id, cost: price });
         if(res.status === 200) { 
             state.coins -= price; 
@@ -161,7 +150,6 @@ async function handleItemClick(id, price, isOwned) {
             msg("shop-msg", res.data.error);
         }
     } else {
-        // Flujo de equipar
         const res = await apiCall("/equip", "POST", { skin_name: id });
         if(res.status === 200) { 
             state.currentSkin = id; 
@@ -198,10 +186,43 @@ for (let key in imagePaths) {
 const sndShoot = new Audio('snd/laserShoot.wav'); sndShoot.volume = 0.3;
 const sndExpl = new Audio('snd/explosion.wav'); sndExpl.volume = 0.4;
 
-let gameLoopId, gameActive = false;
+let gameLoopId, gameActive = false, isPaused = false;
 let player, bullets, enemies, enemyBullets, starsArr, score;
 let lastTime = 0;
 const fpsInterval = 1000 / 60; 
+
+const keys = {};
+window.addEventListener('keydown', e => {
+    keys[e.key] = true;
+    if(e.key === 'Escape' && gameActive) togglePause();
+});
+window.addEventListener('keyup', e => keys[e.key] = false);
+
+function togglePause() {
+    isPaused = !isPaused;
+    if(isPaused) {
+        document.getElementById("pause-screen").classList.add("active");
+    } else {
+        document.getElementById("pause-screen").classList.remove("active");
+        document.getElementById("exit-warning-screen").classList.remove("active");
+        lastTime = performance.now(); 
+    }
+}
+
+document.getElementById("btn-resume").onclick = togglePause;
+document.getElementById("btn-cancel-exit").onclick = togglePause;
+
+document.getElementById("btn-exit-warning").onclick = () => {
+    document.getElementById("pause-screen").classList.remove("active");
+    document.getElementById("exit-warning-screen").classList.add("active");
+};
+
+document.getElementById("btn-confirm-exit").onclick = () => {
+    gameActive = false;
+    isPaused = false;
+    document.getElementById("exit-warning-screen").classList.remove("active");
+    enterLobby();
+};
 
 class Player {
     constructor(skinId) {
@@ -314,13 +335,10 @@ class Enemy {
     }
 }
 
-const keys = {};
-window.addEventListener('keydown', e => keys[e.key] = true);
-window.addEventListener('keyup', e => keys[e.key] = false);
-
 document.getElementById("btn-play").onclick = () => {
     showScreen(null); 
-    document.getElementById("game-wrapper").style.display = "block";
+    canvas.style.display = "block";
+    document.getElementById("hud").style.display = "flex";
     
     player = new Player(state.currentSkin);
     bullets = []; enemies = []; enemyBullets = []; score = 0;
@@ -335,6 +353,7 @@ document.getElementById("btn-play").onclick = () => {
     }));
 
     gameActive = true;
+    isPaused = false;
     lastTime = performance.now(); 
     gameLoop();
 };
@@ -369,6 +388,7 @@ function gameLoop(timestamp) {
     if(!gameActive) return;
     
     gameLoopId = requestAnimationFrame(gameLoop);
+    if(isPaused) return; 
     
     if (!timestamp) timestamp = performance.now();
     const elapsed = timestamp - lastTime;
@@ -423,6 +443,8 @@ function gameLoop(timestamp) {
 async function endGame() {
     gameActive = false; 
     showScreen("gameover-screen");
+    canvas.style.display = "none";
+    document.getElementById("hud").style.display = "none";
     
     const scoreEl = document.getElementById("go-score");
     if(scoreEl) scoreEl.innerText = `Puntuación: ${score}`;
@@ -450,3 +472,49 @@ async function endGame() {
 }
 
 document.getElementById("btn-return-lobby").onclick = enterLobby;
+
+// --- DASHBOARD ADMIN CRUD ---
+document.getElementById("btn-admin-panel").onclick = async () => {
+    showScreen("admin-screen");
+    loadAdminUsers();
+};
+document.getElementById("btn-back-admin-lobby").onclick = enterLobby;
+
+async function loadAdminUsers() {
+    const list = document.getElementById("admin-users-list");
+    list.innerHTML = "<p>Cargando usuarios...</p>";
+    const res = await apiCall("/admin/users");
+    
+    if (res.status === 200) {
+        list.innerHTML = "";
+        res.data.forEach(u => {
+            list.innerHTML += `
+                <div style="display:flex; justify-content:space-between; margin-bottom:10px; border-bottom:1px solid #444; padding-bottom:5px;">
+                    <span>ID:${u.id} | ${u.username} | Monedas: ${u.coins} | Rol: ${u.role}</span>
+                    <div>
+                        <button onclick="editUser(${u.id}, '${u.role}', ${u.coins})" style="padding: 5px; font-size:10px; margin:0;" class="btn-alt">Editar</button>
+                        <button onclick="deleteUser(${u.id})" style="padding: 5px; font-size:10px; margin:0;" class="btn-danger">Borrar</button>
+                    </div>
+                </div>
+            `;
+        });
+    } else {
+        list.innerHTML = "<p style='color:red;'>Error al cargar. ¿Eres admin?</p>";
+    }
+}
+
+async function deleteUser(id) {
+    if(confirm("¿Seguro que deseas eliminar este usuario?")) {
+        await apiCall(`/admin/users/${id}`, "DELETE");
+        loadAdminUsers();
+    }
+}
+
+async function editUser(id, currentRole, currentCoins) {
+    const newRole = prompt("Nuevo rol (usuario/admin):", currentRole);
+    const newCoins = prompt("Cantidad de monedas:", currentCoins);
+    if(newRole && newCoins !== null) {
+        await apiCall(`/admin/users/${id}`, "PUT", { role: newRole, coins: parseInt(newCoins) });
+        loadAdminUsers();
+    }
+}
