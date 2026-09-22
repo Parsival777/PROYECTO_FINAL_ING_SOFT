@@ -74,6 +74,15 @@ document.getElementById("btn-guest").onclick = () => {
     state.token = null; state.user = "Invitado"; enterLobby();
 };
 
+document.getElementById("btn-toggle-password").onclick = () => {
+    const passInput = document.getElementById("password");
+    const btn = document.getElementById("btn-toggle-password");
+    const isHidden = passInput.type === "password";
+    passInput.type = isHidden ? "text" : "password";
+    btn.textContent = isHidden ? "🙈" : "👁️";
+    btn.setAttribute("aria-label", isHidden ? "Ocultar contraseña" : "Mostrar contraseña");
+};
+
 document.getElementById("btn-logout").onclick = () => {
     state.token = null; document.getElementById("username").value = ""; document.getElementById("password").value = "";
     showScreen("auth-screen"); msg("auth-msg", "");
