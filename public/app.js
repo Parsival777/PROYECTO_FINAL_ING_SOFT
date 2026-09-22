@@ -97,7 +97,7 @@ document.getElementById("btn-back-lobby").onclick = enterLobby;
 
 async function renderShop() {
     showScreen("shop-screen");
-    document.getElementById("shop-title").innerText = "🏪 TIENDA Y LOCKER 🏪";
+    document.getElementById("shop-title").innerText = " TIENDA Y LOCKER ";
     document.getElementById("shop-coins").innerText = `Tus Monedas: ${state.coins} 🪙`;
     msg("shop-msg", "");
 
