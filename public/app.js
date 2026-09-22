@@ -335,6 +335,49 @@ class Enemy {
     }
 }
 
+function initStars() {
+    starsArr = [];
+    for (let i = 0; i < 60; i++) {
+        starsArr.push({
+            x: Math.random() * canvas.width,
+            y: Math.random() * canvas.height,
+            size: Math.random() * 2 + 1,
+            s: Math.random() * 2 + 1
+        });
+    }
+}
+
+function initEnemies() {
+    enemies = [];
+    for (let row = 0; row < 5; row++) {
+        for (let col = 0; col < 8; col++) {
+            enemies.push(new Enemy(col, row));
+        }
+    }
+}
+
+function startGame() {
+    showScreen(null);
+    canvas.style.display = "block";
+    document.getElementById("hud").style.display = "flex";
+
+    player = new Player(state.currentSkin);
+    bullets = [];
+    enemyBullets = [];
+    score = 0;
+    isPaused = false;
+    gameActive = true;
+
+    initStars();
+    initEnemies();
+    updateHUD();
+
+    lastTime = performance.now();
+    gameLoopId = requestAnimationFrame(gameLoop);
+}
+
+document.getElementById("btn-play").onclick = startGame;
+
 function checkCollision(r1, r2) {
     return r1.x < r2.x + r2.w && r1.x + r1.w > r2.x && r1.y < r2.y + r2.h && r1.y + r1.h > r2.y;
 }
