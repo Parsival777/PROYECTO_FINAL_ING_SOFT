@@ -22,9 +22,30 @@ const PORT = process.env.PORT || 3000;
 // Oculta la cabecera "X-Powered-By: Express" (fuga de información de stack tecnológico)
 app.disable('x-powered-by');
 
-// Cabeceras de seguridad estándar (CSP, X-Frame-Options, X-Content-Type-Options,
-// Strict-Transport-Security, etc.)
-app.use(helmet());
+// Cabeceras de seguridad estándar (X-Frame-Options, X-Content-Type-Options,
+// Strict-Transport-Security, etc.), con una Content-Security-Policy explícita
+// en vez del preset por defecto: el preset de helmet incluye "https:" como
+// fuente comodín en style-src/font-src, que ZAP marca como "CSP: Wildcard
+// Directive" (Medium). Aquí restringimos todo a 'self', sin comodines.
+app.use(helmet({
+    contentSecurityPolicy: {
+        directives: {
+            defaultSrc: ["'self'"],
+            scriptSrc: ["'self'"],
+            // 'unsafe-inline' sigue siendo necesario mientras el HTML use
+            // atributos style="..." inline. Ver nota de refactor más abajo.
+            styleSrc: ["'self'", "'unsafe-inline'"],
+            fontSrc: ["'self'"],
+            imgSrc: ["'self'", 'data:'],
+            connectSrc: ["'self'"],
+            objectSrc: ["'none'"],
+            baseUri: ["'self'"],
+            formAction: ["'self'"],
+            frameAncestors: ["'self'"],
+            upgradeInsecureRequests: []
+        }
+    }
+}));
 
 // CORS restringido a una lista blanca de orígenes en lugar de "*"
 const allowedOrigins = (process.env.ALLOWED_ORIGINS || '')
@@ -52,10 +73,6 @@ const authLimiter = rateLimit({
     max: 10, // máximo 10 intentos por IP en la ventana
     standardHeaders: true,
     legacyHeaders: false,
-    // Desactivado en entorno de pruebas: Jest/Supertest reutiliza la misma IP
-    // para decenas de peticiones seguidas, lo que dispararía el límite y
-    // rompería pruebas que nada tienen que ver con fuerza bruta real.
-    skip: (req) => process.env.NODE_ENV === 'test',
     message: { error: 'Demasiados intentos. Intenta de nuevo más tarde.' }
 });
 
