@@ -25,17 +25,18 @@ app.disable('x-powered-by');
 // Cabeceras de seguridad estándar (X-Frame-Options, X-Content-Type-Options,
 // Strict-Transport-Security, etc.), con una Content-Security-Policy explícita
 // en vez del preset por defecto: el preset de helmet incluye "https:" como
-// fuente comodín en style-src/font-src, que ZAP marca como "CSP: Wildcard
-// Directive" (Medium). Aquí restringimos todo a 'self', sin comodines.
+// fuente comodín en style-src/font-src (alerta ZAP "CSP: Wildcard Directive")
+// y 'unsafe-inline' en style-src (alerta ZAP "CSP: style-src unsafe-inline").
+// Como index.html ya no usa atributos style="..." inline, no necesitamos
+// 'unsafe-inline' en absoluto. Se permite explícitamente Google Fonts porque
+// style.css lo carga vía @import.
 app.use(helmet({
     contentSecurityPolicy: {
         directives: {
             defaultSrc: ["'self'"],
             scriptSrc: ["'self'"],
-            // 'unsafe-inline' sigue siendo necesario mientras el HTML use
-            // atributos style="..." inline. Ver nota de refactor más abajo.
-            styleSrc: ["'self'", "'unsafe-inline'"],
-            fontSrc: ["'self'"],
+            styleSrc: ["'self'", 'https://fonts.googleapis.com'],
+            fontSrc: ["'self'", 'https://fonts.gstatic.com'],
             imgSrc: ["'self'", 'data:'],
             connectSrc: ["'self'"],
             objectSrc: ["'none'"],

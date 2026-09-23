@@ -354,3 +354,136 @@ canvas {
     #hud { font-size: 1.2rem; top: 10px; left: 10px; right: 10px; }
     .lives img { width: 20px; height: 20px; }
 }
+
+/* ============================================
+   ESTILOS QUE SE PASARON DESDE EL HTML
+   ============================================ */
+
+/* --- Pantalla de login --- */
+#btn-guest { margin-top: 30px; font-size: 16px; }
+
+/* --- Lobby --- */
+#lobby-coins { color: var(--signal-gold); }
+#lobby-skin { color: var(--dim-static); }
+.lobby-actions {
+    margin-top: 40px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+#btn-admin-panel {
+    display: none;
+    border-color: #ff8000;
+    color: #ff8000;
+}
+
+/* --- Tienda --- */
+#shop-coins { color: var(--signal-gold); }
+.shop-actions { margin-top: 40px; }
+#shop-msg { color: #ffff00; }
+
+/* --- Game Over --- */
+.gameover-title { color: var(--alert-coral); font-size: 40px; }
+#go-coins { color: var(--signal-gold); margin-bottom: 40px; }
+#leaderboard-container { margin-bottom: 30px; text-align: left; }
+.leaderboard-title {
+    color: var(--phosphor-cyan);
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+/* --- Pausa --- */
+#pause-screen { background: rgba(0, 0, 0, 0.8); z-index: 20; }
+.pause-title { color: #ffff00; }
+
+/* --- Advertencia de abandono --- */
+#exit-warning-screen { background: rgba(20, 0, 0, 0.95); z-index: 30; }
+.warning-title { color: var(--alert-coral); font-size: 30px; }
+.warning-text { font-size: 18px; margin-bottom: 30px; }
+
+/* --- Panel admin --- */
+.admin-title { color: #ff8000; }
+#admin-users-list {
+    width: 80%;
+    max-width: 600px;
+    background: #111;
+    padding: 20px;
+    border-radius: 10px;
+    border: 2px solid #555;
+    overflow-y: auto;
+    max-height: 300px;
+    margin-bottom: 20px;
+}
+
+/* --- Modales (editar / eliminar) --- */
+.modal-overlay {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    z-index: 50;
+}
+.modal-overlay--danger { background: rgba(20, 0, 0, 0.9); }
+
+.modal-box {
+    background: #111;
+    padding: 30px;
+    border-radius: 10px;
+    text-align: center;
+}
+.modal-box--admin { border: 3px solid #ff8000; box-shadow: 0 0 20px #ff8000; }
+.modal-box--danger { border: 3px solid #ff0000; box-shadow: 0 0 20px #ff0000; }
+
+.modal-title { margin-bottom: 20px; }
+.modal-title--admin { color: #ff8000; }
+.modal-title--danger { color: #ff0000; }
+
+#edit-modal-user { color: var(--phosphor-cyan); margin-bottom: 20px; font-size: 18px; }
+#delete-modal-user { color: var(--starlight); margin-bottom: 30px; font-size: 18px; }
+
+.modal-form-group { text-align: left; width: 250px; margin: 0 auto; }
+.modal-label {
+    color: var(--starlight);
+    font-size: 15px;
+    display: block;
+    margin-bottom: 8px;
+}
+
+#edit-role {
+    background: #000;
+    border: 2px solid var(--phosphor-magenta);
+    color: var(--starlight);
+    padding: 15px;
+    width: 100%;
+    margin-bottom: 20px;
+    outline: none;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 16px;
+}
+
+#edit-coins {
+    background: #000;
+    border: 2px solid var(--phosphor-cyan);
+    color: var(--starlight);
+    padding: 15px;
+    width: 100%;
+    outline: none;
+    margin-bottom: 30px;
+    font-family: inherit;
+    font-size: 16px;
+    text-align: center;
+}
+
+.modal-actions { display: flex; gap: 15px; justify-content: center; }
+
+#btn-save-edit { border-color: var(--phosphor-green); color: var(--phosphor-green); margin: 0; }
+#btn-cancel-edit { margin: 0; }
+#btn-confirm-delete { margin: 0; }
+#btn-cancel-delete { margin: 0; }

@@ -22,7 +22,7 @@
             <button id="btn-login">Iniciar Sesión</button>
             <button id="btn-register" class="btn-alt">Registrarse</button>
         </div>
-        <button id="btn-guest" class="btn-danger" style="margin-top: 30px; font-size: 16px;">Entrar como Invitado</button>
+        <button id="btn-guest" class="btn-danger">Entrar como Invitado</button>
         <p id="auth-msg" class="error"></p>
     </div>
 
@@ -30,13 +30,13 @@
     <div id="lobby-screen" class="screen">
         <h1>--- CREW LOUNGE ---</h1>
         <h2 id="lobby-user">Piloto: ---</h2>
-        <h2 id="lobby-coins" style="color:#ffd700;">Billetera: 0 🪙</h2>
-        <p id="lobby-skin" style="color:#aaa;">Nave Actual: ---</p>
-        
-        <div style="margin-top: 40px; display: flex; flex-direction: column; gap: 15px;">
+        <h2 id="lobby-coins">Billetera: 0 🪙</h2>
+        <p id="lobby-skin">Nave Actual: ---</p>
+
+        <div class="lobby-actions">
             <button id="btn-play">Iniciar Misión</button>
             <button id="btn-shop" class="btn-alt">Tienda y Locker</button>
-            <button id="btn-admin-panel" class="btn-alt" style="display: none; border-color: #ff8000; color: #ff8000;"> Admin</button>
+            <button id="btn-admin-panel" class="btn-alt">Admin</button>
             <button id="btn-logout" class="btn-danger">Cerrar Sesión</button>
         </div>
     </div>
@@ -44,86 +44,86 @@
     <!-- PANTALLA TIENDA / LOCKER -->
     <div id="shop-screen" class="screen">
         <h1 id="shop-title"> TIENDA Y LOCKER </h1>
-        <h2 id="shop-coins" style="color:#ffd700;">Tus Monedas: 0 🪙</h2>
-        
+        <h2 id="shop-coins">Tus Monedas: 0 🪙</h2>
+
         <div class="shop-grid" id="shop-container">
             <!-- Las tarjetas se generan por JS -->
         </div>
-        
-        <div style="margin-top: 40px;">
+
+        <div class="shop-actions">
             <button id="btn-back-lobby" class="btn-danger">Volver al Lobby</button>
         </div>
-        <p id="shop-msg" class="error" style="color:#ffff00;"></p>
+        <p id="shop-msg" class="error"></p>
     </div>
 
     <!-- PANTALLA GAME OVER -->
     <div id="gameover-screen" class="screen">
-        <h1 style="color: #ff0000; font-size: 40px;">GAME OVER</h1>
+        <h1 class="gameover-title">GAME OVER</h1>
         <h2 id="go-score">Puntuación: 0</h2>
-        <h2 id="go-coins" style="color:#ffd700; margin-bottom: 40px;">+ 0 🪙</h2>
-        
-        <div id="leaderboard-container" style="margin-bottom: 30px; text-align: left;">
-            <p style="color: #00ffff; text-align: center; margin-bottom: 20px;">--- TOP PILOTOS ---</p>
+        <h2 id="go-coins">+ 0 🪙</h2>
+
+        <div id="leaderboard-container">
+            <p class="leaderboard-title">--- TOP PILOTOS ---</p>
             <div id="leaderboard-list"></div>
         </div>
-        
+
         <button id="btn-return-lobby">Volver al Lobby</button>
     </div>
 
     <!-- PANTALLA PAUSA -->
-    <div id="pause-screen" class="screen" style="background: rgba(0,0,0,0.8); z-index: 20;">
-        <h1 style="color: #ffff00;">JUEGO EN PAUSA</h1>
+    <div id="pause-screen" class="screen">
+        <h1 class="pause-title">JUEGO EN PAUSA</h1>
         <button id="btn-resume">Reanudar</button>
         <button id="btn-exit-warning" class="btn-danger">Volver al Lobby</button>
     </div>
 
     <!-- PANTALLA ADVERTENCIA ABANDONO -->
-    <div id="exit-warning-screen" class="screen" style="background: rgba(20,0,0,0.95); z-index: 30;">
-        <h1 style="color: #ff0000; font-size: 30px;">¡ADVERTENCIA!</h1>
-        <p style="font-size: 18px; margin-bottom: 30px;">Si abandonas la misión ahora, perderás todo<br>tu progreso y no recibirás monedas.</p>
+    <div id="exit-warning-screen" class="screen">
+        <h1 class="warning-title">¡ADVERTENCIA!</h1>
+        <p class="warning-text">Si abandonas la misión ahora, perderás todo<br>tu progreso y no recibirás monedas.</p>
         <button id="btn-confirm-exit" class="btn-danger">Abandonar Misión</button>
         <button id="btn-cancel-exit" class="btn-alt">Cancelar y Reanudar</button>
     </div>
 
     <!-- PANTALLA DASHBOARD ADMIN -->
     <div id="admin-screen" class="screen">
-        <h1 style="color: #ff8000;"> PANEL DE ADMINISTRADOR </h1>
-        <div id="admin-users-list" style="width: 80%; max-width: 600px; background: #111; padding: 20px; border-radius: 10px; border: 2px solid #555; overflow-y: auto; max-height: 300px; margin-bottom: 20px;"></div>
+        <h1 class="admin-title"> PANEL DE ADMINISTRADOR </h1>
+        <div id="admin-users-list"></div>
         <button id="btn-back-admin-lobby" class="btn-danger">Volver al Lobby</button>
     </div>
 
     <!-- MODAL DE EDICIÓN DE USUARIO -->
-    <div id="edit-modal" style="display: none; flex-direction: column; align-items: center; justify-content: center; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 50;">
-        <div style="background: #111; border: 3px solid #ff8000; padding: 30px; border-radius: 10px; text-align: center; box-shadow: 0 0 20px #ff8000;">
-            <h2 style="color: #ff8000; margin-bottom: 20px;">MODIFICAR PILOTO</h2>
-            <p id="edit-modal-user" style="color: #00ffff; margin-bottom: 20px; font-size: 18px;">Piloto: ---</p>
-            
-            <div class="form-group" style="text-align: left; width: 250px; margin: 0 auto;">
-                <label style="color: #fff; font-size: 15px; display: block; margin-bottom: 8px;">Rol del sistema:</label>
-                <select id="edit-role" style="background: #000; border: 2px solid #ff00ff; color: #fff; padding: 15px; width: 100%; margin-bottom: 20px; outline: none; cursor: pointer; font-family: inherit; font-size: 16px;">
+    <div id="edit-modal" class="modal-overlay">
+        <div class="modal-box modal-box--admin">
+            <h2 class="modal-title modal-title--admin">MODIFICAR PILOTO</h2>
+            <p id="edit-modal-user">Piloto: ---</p>
+
+            <div class="form-group modal-form-group">
+                <label class="modal-label">Rol del sistema:</label>
+                <select id="edit-role">
                     <option value="usuario">Usuario</option>
                     <option value="admin">Administrador</option>
                 </select>
 
-                <label style="color: #fff; font-size: 15px; display: block; margin-bottom: 8px;">Billetera (Monedas):</label>
-                <input type="number" id="edit-coins" min="0" style="background: #000; border: 2px solid #00ffff; color: #fff; padding: 15px; width: 100%; outline: none; margin-bottom: 30px; font-family: inherit; font-size: 16px; text-align: center;">
+                <label class="modal-label">Billetera (Monedas):</label>
+                <input type="number" id="edit-coins" min="0">
             </div>
 
-            <div style="display: flex; gap: 15px; justify-content: center;">
-                <button id="btn-save-edit" style="border-color: #00ff00; color: #00ff00; margin: 0;">Guardar</button>
-                <button id="btn-cancel-edit" class="btn-danger" style="margin: 0;">Cancelar</button>
+            <div class="modal-actions">
+                <button id="btn-save-edit">Guardar</button>
+                <button id="btn-cancel-edit" class="btn-danger">Cancelar</button>
             </div>
         </div>
     </div>
 
     <!-- MODAL DE CONFIRMACIÓN DE BORRADO -->
-    <div id="delete-modal" style="display: none; flex-direction: column; align-items: center; justify-content: center; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(20,0,0,0.9); z-index: 50;">
-        <div style="background: #111; border: 3px solid #ff0000; padding: 30px; border-radius: 10px; text-align: center; box-shadow: 0 0 20px #ff0000;">
-            <h2 style="color: #ff0000; margin-bottom: 20px;">¿ELIMINAR PILOTO?</h2>
-            <p id="delete-modal-user" style="color: #fff; margin-bottom: 30px; font-size: 18px;">Esta acción es irreversible.</p>
-            <div style="display: flex; gap: 15px; justify-content: center;">
-                <button id="btn-confirm-delete" class="btn-danger" style="margin: 0;">Eliminar</button>
-                <button id="btn-cancel-delete" class="btn-alt" style="margin: 0;">Cancelar</button>
+    <div id="delete-modal" class="modal-overlay modal-overlay--danger">
+        <div class="modal-box modal-box--danger">
+            <h2 class="modal-title modal-title--danger">¿ELIMINAR PILOTO?</h2>
+            <p id="delete-modal-user">Esta acción es irreversible.</p>
+            <div class="modal-actions">
+                <button id="btn-confirm-delete" class="btn-danger">Eliminar</button>
+                <button id="btn-cancel-delete" class="btn-alt">Cancelar</button>
             </div>
         </div>
     </div>
