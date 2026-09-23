@@ -3,6 +3,10 @@ const bcrypt = require('bcryptjs');
 const mysql = require('mysql2/promise');
 const jwt = require('jsonwebtoken');
 
+// 0. server.js ahora exige JWT_SECRET en el entorno (falla rápido si falta).
+//    Debe definirse ANTES de requerir './server'.
+process.env.JWT_SECRET = process.env.JWT_SECRET || 'test_secret_solo_para_pruebas';
+
 // 1. Simulamos la conexión a la base de datos
 jest.mock('mysql2/promise', () => {
     const mPool = { execute: jest.fn() };
@@ -16,7 +20,7 @@ const pool = mysql.createPool();
 // 3. Generamos un token válido para probar las rutas protegidas
 const validToken = jwt.sign(
     { id: 1, username: 'piloto_prueba', role: 'usuario' },
-    process.env.JWT_SECRET || 'secreto_super_seguro_galaga',
+    process.env.JWT_SECRET,
     { expiresIn: '1h' }
 );
 
@@ -28,7 +32,7 @@ describe('Pruebas de Integración y Cobertura (Galaga SaaS)', () => {
     // --- RUTAS PÚBLICAS ---
     it('Debería registrar un usuario correctamente (201)', async () => {
         pool.execute.mockResolvedValueOnce([[]]); 
-        const res = await request(app).post('/api/register').send({ username: 'piloto', password: '123' });
+        const res = await request(app).post('/api/register').send({ username: 'piloto', password: 'Piloto123' });
         expect(res.statusCode).toBe(201);
     });
 
@@ -40,22 +44,22 @@ describe('Pruebas de Integración y Cobertura (Galaga SaaS)', () => {
     it('Debería rechazar registro de usuario duplicado (400)', async () => {
         const error = new Error('Duplicate'); error.code = 'ER_DUP_ENTRY';
         pool.execute.mockRejectedValueOnce(error);
-        const res = await request(app).post('/api/register').send({ username: 'piloto', password: '123' });
+        const res = await request(app).post('/api/register').send({ username: 'piloto', password: 'Piloto123' });
         expect(res.statusCode).toBe(400);
     });
 
     it('Debería iniciar sesión correctamente (200)', async () => {
-        const hash = await bcrypt.hash('123', 10);
+        const hash = await bcrypt.hash('Piloto123', 10);
         pool.execute.mockResolvedValueOnce([[{ id: 1, username: 'piloto', password: hash, role: 'usuario' }]]);
-        const res = await request(app).post('/api/login').send({ username: 'piloto', password: '123' });
+        const res = await request(app).post('/api/login').send({ username: 'piloto', password: 'Piloto123' });
         expect(res.statusCode).toBe(200);
         expect(res.body).toHaveProperty('token');
     });
 
     it('Debería rechazar login con contraseña incorrecta (401)', async () => {
-        const hash = await bcrypt.hash('123', 10);
+        const hash = await bcrypt.hash('Piloto123', 10);
         pool.execute.mockResolvedValueOnce([[{ id: 1, username: 'piloto', password: hash }]]);
-        const res = await request(app).post('/api/login').send({ username: 'piloto', password: 'mal' });
+        const res = await request(app).post('/api/login').send({ username: 'piloto', password: 'Incorrecta1' });
         expect(res.statusCode).toBe(401);
     });
 

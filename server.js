@@ -1,16 +1,59 @@
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 const mysql = require('mysql2/promise');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const path = require('path');
 require('dotenv').config();
 
+// --- Falla rápido si falta configuración crítica de seguridad ---
+// Un secreto JWT hardcodeado permite forjar tokens válidos si el atacante
+// conoce (o adivina) el valor por defecto. Nunca debe existir un fallback.
+if (!process.env.JWT_SECRET) {
+    throw new Error('JWT_SECRET no está definido en las variables de entorno. La aplicación no puede iniciar sin él.');
+}
+const JWT_SECRET = process.env.JWT_SECRET;
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.use(cors()); 
-app.use(express.json());
+// Oculta la cabecera "X-Powered-By: Express" (fuga de información de stack tecnológico)
+app.disable('x-powered-by');
+
+// Cabeceras de seguridad estándar (CSP, X-Frame-Options, X-Content-Type-Options,
+// Strict-Transport-Security, etc.)
+app.use(helmet());
+
+// CORS restringido a una lista blanca de orígenes en lugar de "*"
+const allowedOrigins = (process.env.ALLOWED_ORIGINS || '')
+    .split(',')
+    .map(o => o.trim())
+    .filter(Boolean);
+
+app.use(cors({
+    origin: (origin, callback) => {
+        // Permite herramientas sin origin (curl, apps móviles) y orígenes en whitelist
+        if (!origin || allowedOrigins.length === 0 || allowedOrigins.includes(origin)) {
+            return callback(null, true);
+        }
+        return callback(new Error('No permitido por CORS'));
+    },
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
+app.use(express.json({ limit: '100kb' })); // límite para mitigar payloads abusivos
+
+// Rate limiting en rutas de autenticación para mitigar fuerza bruta / credential stuffing
+const authLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutos
+    max: 10, // máximo 10 intentos por IP en la ventana
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: 'Demasiados intentos. Intenta de nuevo más tarde.' }
+});
 
 // Bloqueo estricto de caché para evitar que el navegador guarde versiones viejas
 app.use(express.static(path.join(__dirname, 'public'), { 
@@ -37,7 +80,7 @@ const authenticateToken = (req, res, next) => {
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1]; 
     if (!token) return res.status(401).json({ error: 'Acceso denegado.' });
-    jwt.verify(token, process.env.JWT_SECRET || 'secreto_super_seguro_galaga', (err, user) => {
+    jwt.verify(token, JWT_SECRET, (err, user) => {
         if (err) return res.status(403).json({ error: 'Token inválido.' });
         req.user = user; 
         next(); 
@@ -49,12 +92,25 @@ const verifyAdmin = (req, res, next) => {
     next();
 };
 
-app.post('/api/register', async (req, res) => {
+// Solo se aceptan letras/números/guion-bajo, entre 3 y 20 caracteres, para evitar
+// entradas anómalas y reducir superficie de ataque (p.ej. bypass de reglas, payloads raros).
+const USERNAME_REGEX = /^[a-zA-Z0-9_]{3,20}$/;
+const MIN_PASSWORD_LENGTH = 8;
+
+app.post('/api/register', authLimiter, async (req, res) => {
     try {
         const { username, password } = req.body;
         if (!username || !password) return res.status(400).json({ error: 'Faltan datos.' });
+        if (!USERNAME_REGEX.test(username)) {
+            return res.status(400).json({ error: 'El usuario debe tener entre 3 y 20 caracteres alfanuméricos.' });
+        }
+        if (typeof password !== 'string' || password.length < MIN_PASSWORD_LENGTH) {
+            return res.status(400).json({ error: `La contraseña debe tener al menos ${MIN_PASSWORD_LENGTH} caracteres.` });
+        }
         const hashedPassword = await bcrypt.hash(password, 10);
-        await pool.execute('INSERT INTO users (username, password) VALUES (?, ?)', [username, hashedPassword]);
+        // El rol nunca se toma del body: siempre se crea como 'usuario' por defecto,
+        // evitando que un cliente se auto-asigne el rol de administrador.
+        await pool.execute('INSERT INTO users (username, password, role) VALUES (?, ?, ?)', [username, hashedPassword, 'usuario']);
         res.status(201).json({ message: 'Usuario registrado exitosamente.' });
     } catch (error) {
         if (error.code === 'ER_DUP_ENTRY') return res.status(400).json({ error: 'El nombre de usuario ya está en uso.' });
@@ -62,14 +118,16 @@ app.post('/api/register', async (req, res) => {
     }
 });
 
-app.post('/api/login', async (req, res) => {
+app.post('/api/login', authLimiter, async (req, res) => {
     try {
         const { username, password } = req.body;
+        if (!username || !password) return res.status(400).json({ error: 'Faltan datos.' });
         const [rows] = await pool.execute('SELECT * FROM users WHERE username = ?', [username]);
-        if (rows.length === 0) return res.status(401).json({ error: 'Usuario no encontrado.' });
+        // Mensaje genérico: no revelar si el usuario existe o no (evita enumeración de cuentas)
+        if (rows.length === 0) return res.status(401).json({ error: 'Usuario o contraseña incorrectos.' });
         const validPassword = await bcrypt.compare(password, rows[0].password);
-        if (!validPassword) return res.status(401).json({ error: 'Contraseña incorrecta.' });
-        const token = jwt.sign({ id: rows[0].id, username: rows[0].username, role: rows[0].role || 'usuario' }, process.env.JWT_SECRET || 'secreto_super_seguro_galaga', { expiresIn: '24h' });
+        if (!validPassword) return res.status(401).json({ error: 'Usuario o contraseña incorrectos.' });
+        const token = jwt.sign({ id: rows[0].id, username: rows[0].username, role: rows[0].role || 'usuario' }, JWT_SECRET, { expiresIn: '24h' });
         res.status(200).json({ token, message: 'Autenticación exitosa.' });
     } catch (error) {
         res.status(500).json({ error: 'Error interno.' });
@@ -149,17 +207,40 @@ app.get('/api/admin/users', authenticateToken, verifyAdmin, async (req, res) => 
     } catch (error) { res.status(500).json({ error: 'Error del servidor.' }); }
 });
 
+// Único conjunto de roles válidos en el sistema. Cualquier otro valor se rechaza
+// para evitar que se inyecten roles arbitrarios (escalado de privilegios).
+const VALID_ROLES = ['usuario', 'admin'];
+
 app.put('/api/admin/users/:id', authenticateToken, verifyAdmin, async (req, res) => {
     try {
         const { role, coins } = req.body;
-        await pool.execute('UPDATE users SET role = ?, coins = ? WHERE id = ?', [role, coins, req.params.id]);
+        const targetId = Number(req.params.id);
+
+        if (role !== undefined && !VALID_ROLES.includes(role)) {
+            return res.status(400).json({ error: `Rol inválido. Valores permitidos: ${VALID_ROLES.join(', ')}.` });
+        }
+        if (coins !== undefined && (!Number.isFinite(Number(coins)) || Number(coins) < 0)) {
+            return res.status(400).json({ error: 'El valor de monedas es inválido.' });
+        }
+        // Evita que un administrador se quite a sí mismo el rol de admin por error,
+        // lo que podría dejar el sistema sin ningún administrador.
+        if (targetId === req.user.id && role !== undefined && role !== 'admin') {
+            return res.status(400).json({ error: 'No puedes cambiar tu propio rol de administrador.' });
+        }
+
+        await pool.execute('UPDATE users SET role = ?, coins = ? WHERE id = ?', [role, coins, targetId]);
         res.json({ message: 'Usuario actualizado.' });
     } catch (error) { res.status(500).json({ error: 'Error al actualizar.' }); }
 });
 
 app.delete('/api/admin/users/:id', authenticateToken, verifyAdmin, async (req, res) => {
     try {
-        await pool.execute('DELETE FROM users WHERE id = ?', [req.params.id]);
+        const targetId = Number(req.params.id);
+        // Evita que un administrador se elimine a sí mismo por accidente
+        if (targetId === req.user.id) {
+            return res.status(400).json({ error: 'No puedes eliminar tu propia cuenta de administrador.' });
+        }
+        await pool.execute('DELETE FROM users WHERE id = ?', [targetId]);
         res.json({ message: 'Usuario eliminado.' });
     } catch (error) { res.status(500).json({ error: 'Error al eliminar.' }); }
 });
