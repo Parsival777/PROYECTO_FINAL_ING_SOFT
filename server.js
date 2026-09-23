@@ -52,6 +52,10 @@ const authLimiter = rateLimit({
     max: 10, // máximo 10 intentos por IP en la ventana
     standardHeaders: true,
     legacyHeaders: false,
+    // Desactivado en entorno de pruebas: Jest/Supertest reutiliza la misma IP
+    // para decenas de peticiones seguidas, lo que dispararía el límite y
+    // rompería pruebas que nada tienen que ver con fuerza bruta real.
+    skip: (req) => process.env.NODE_ENV === 'test',
     message: { error: 'Demasiados intentos. Intenta de nuevo más tarde.' }
 });
 
