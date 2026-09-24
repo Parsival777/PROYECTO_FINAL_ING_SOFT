@@ -138,12 +138,20 @@ async function renderShop() {
             <img src="${item.src}" alt="${item.name}">
             <h3 style="margin-bottom:10px; font-size:18px;">${item.name}</h3>
             <p style="margin-bottom:15px; color:#fff;">${status}</p>
-            <button class="${btnClass}" ${disabled ? "disabled style='opacity:0.5; cursor:not-allowed;'" : ""} 
-                onclick="handleItemClick('${item.id}', ${item.price}, ${owned})">${actionText}</button>
+            <button class="${btnClass}" data-action="shop-item" data-id="${item.id}" data-price="${item.price}" data-owned="${owned}"
+                ${disabled ? "disabled style='opacity:0.5; cursor:not-allowed;'" : ""}>${actionText}</button>
         `;
         container.appendChild(card);
     });
 }
+
+// Delegación de eventos para la tienda: evita atributos onclick inline,
+// que la Content-Security-Policy (script-src 'self') bloquea.
+document.getElementById("shop-container").addEventListener("click", (e) => {
+    const btn = e.target.closest('[data-action="shop-item"]');
+    if (!btn) return;
+    handleItemClick(btn.dataset.id, Number(btn.dataset.price), btn.dataset.owned === "true");
+});
 
 async function handleItemClick(id, price, isOwned) {
     if(!state.token) return msg("shop-msg", "Regístrate para usar la tienda.");
@@ -513,24 +521,55 @@ async function loadAdminUsers() {
     const list = document.getElementById("admin-users-list");
     list.innerHTML = "<p style='font-size: 18px;'>Cargando usuarios...</p>";
     const res = await apiCall("/admin/users");
-    
+
     if (res.status === 200) {
-        list.innerHTML = "";
-        res.data.forEach(u => {
-            list.innerHTML += `
-                <div style="display:flex; justify-content:space-between; align-items: center; margin-bottom:15px; border-bottom:1px solid #444; padding-bottom:12px;">
-                    <span style="font-size: 18px; line-height: 1.5; color: #fff;">${u.username} | Monedas: ${u.coins} | Rol: ${u.role}</span>
-                    <div style="display: flex; gap: 10px;">
-                        <button onclick="editUser(${u.id}, '${u.username}', '${u.role}', ${u.coins})" style="padding: 8px 12px; font-size: 15px; margin:0;" class="btn-alt">Editar</button>
-                        <button onclick="deleteUser(${u.id}, '${u.username}')" style="padding: 8px 12px; font-size: 15px; margin:0;" class="btn-danger">Borrar</button>
-                    </div>
+        if (res.data.length === 0) {
+            list.innerHTML = "<p style='font-size: 18px;'>No hay usuarios.</p>";
+            return;
+        }
+        list.innerHTML = `
+            <div class="admin-table">
+                <div class="admin-row admin-row--head">
+                    <span class="admin-col admin-col--user">Piloto</span>
+                    <span class="admin-col admin-col--coins">Monedas</span>
+                    <span class="admin-col admin-col--role">Rol</span>
+                    <span class="admin-col admin-col--actions">Acciones</span>
                 </div>
-            `;
-        });
+                ${res.data.map(u => `
+                    <div class="admin-row" data-user-id="${u.id}">
+                        <span class="admin-col admin-col--user">${u.username}</span>
+                        <span class="admin-col admin-col--coins">${u.coins} 🪙</span>
+                        <span class="admin-col admin-col--role">
+                            <span class="role-badge role-badge--${u.role}">${u.role}</span>
+                        </span>
+                        <span class="admin-col admin-col--actions">
+                            <button class="btn-alt admin-btn" data-action="edit-user"
+                                data-id="${u.id}" data-username="${u.username}" data-role="${u.role}" data-coins="${u.coins}">Editar</button>
+                            <button class="btn-danger admin-btn" data-action="delete-user"
+                                data-id="${u.id}" data-username="${u.username}">Borrar</button>
+                        </span>
+                    </div>
+                `).join("")}
+            </div>
+        `;
     } else {
         list.innerHTML = "<p style='color:red; font-size: 18px;'>Error al cargar. ¿Eres admin?</p>";
     }
 }
+
+// Delegación de eventos para la tabla de admin: evita atributos onclick inline,
+// que la Content-Security-Policy (script-src 'self') bloquea silenciosamente.
+document.getElementById("admin-users-list").addEventListener("click", (e) => {
+    const editBtn = e.target.closest('[data-action="edit-user"]');
+    if (editBtn) {
+        editUser(Number(editBtn.dataset.id), editBtn.dataset.username, editBtn.dataset.role, Number(editBtn.dataset.coins));
+        return;
+    }
+    const delBtn = e.target.closest('[data-action="delete-user"]');
+    if (delBtn) {
+        deleteUser(Number(delBtn.dataset.id), delBtn.dataset.username);
+    }
+});
 
 let editingUserId = null;
 

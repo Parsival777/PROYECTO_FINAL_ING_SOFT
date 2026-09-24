@@ -405,14 +405,94 @@ canvas {
 .admin-title { color: #ff8000; }
 #admin-users-list {
     width: 80%;
-    max-width: 600px;
-    background: #111;
-    padding: 20px;
-    border-radius: 10px;
-    border: 2px solid #555;
+    max-width: 640px;
+    background: var(--cabinet-edge);
+    padding: 4px;
+    border-radius: 4px;
+    border: 2px solid #ff8000;
+    box-shadow: 4px 4px 0 0 rgba(0,0,0,0.6), 0 0 16px rgba(255,128,0,0.25);
     overflow-y: auto;
-    max-height: 300px;
+    max-height: 360px;
     margin-bottom: 20px;
+}
+
+.admin-table { display: flex; flex-direction: column; }
+
+.admin-row {
+    display: grid;
+    grid-template-columns: 1.3fr 0.9fr 0.8fr 1.6fr;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    font-family: var(--font-body);
+}
+.admin-row:last-child { border-bottom: none; }
+
+.admin-row:not(.admin-row--head):nth-child(even) {
+    background: rgba(255,255,255,0.03);
+}
+.admin-row:not(.admin-row--head):hover {
+    background: rgba(255,128,0,0.08);
+}
+
+.admin-row--head {
+    background: rgba(0,0,0,0.4);
+    font-size: 1.05rem;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--dim-static);
+    border-bottom: 2px solid #ff8000;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
+.admin-col {
+    font-size: 1.3rem;
+    color: var(--starlight);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.admin-col--coins { color: var(--signal-gold); }
+
+.admin-col--actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+}
+
+.admin-btn {
+    padding: 8px 14px;
+    font-size: 1.05rem;
+    margin: 0;
+    box-shadow: 3px 3px 0 0 rgba(0,0,0,0.6);
+}
+.admin-btn:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 0 rgba(0,0,0,0.6); }
+
+.role-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 3px;
+    font-size: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border: 1px solid currentColor;
+    font-family: var(--font-body);
+}
+.role-badge--usuario { color: var(--phosphor-cyan); text-shadow: 0 0 6px rgba(77,238,234,0.4); }
+.role-badge--admin { color: #ff8000; text-shadow: 0 0 6px rgba(255,128,0,0.4); }
+
+@media (max-width: 640px) {
+    #admin-users-list { width: 92%; max-height: 320px; }
+    .admin-row {
+        grid-template-columns: 1fr;
+        gap: 4px;
+        padding: 12px;
+    }
+    .admin-row--head { display: none; }
+    .admin-col--actions { justify-content: flex-start; margin-top: 6px; }
 }
 
 /* --- Modales (editar / eliminar) --- */
