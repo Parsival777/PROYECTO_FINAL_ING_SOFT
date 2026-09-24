@@ -256,9 +256,7 @@ app.delete('/api/admin/users/:id', authenticateToken, verifyAdmin, async (req, r
     } catch (error) { res.status(500).json({ error: 'Error al eliminar.' }); }
 });
 
-// ==========================================
-// NUEVO: PREVENCIÓN DE FALSOS POSITIVOS EN ZAP
-// ==========================================
+
 // Evita que OWASP ZAP reciba el HTML del juego y marque los comentarios 
 // internos como un fallo al escanear archivos estándar de los bots.
 app.get('/robots.txt', (req, res) => {
