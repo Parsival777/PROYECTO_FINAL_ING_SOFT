@@ -128,13 +128,16 @@
         </div>
     </div>
 
-    <!-- HUD DURANTE EL JUEGO -->
-    <div id="hud">
-        <div class="lives" id="lives-container"></div>
-        <div id="score-display">SCORE: 0</div>
-    </div>
+    <!-- CONTENEDOR DEL JUEGO: ancla el HUD al canvas, no a toda la ventana -->
+    <div id="game-wrapper">
+        <!-- HUD DURANTE EL JUEGO -->
+        <div id="hud">
+            <div class="lives" id="lives-container"></div>
+            <div id="score-display">SCORE: 0</div>
+        </div>
 
-    <canvas id="gameCanvas" width="800" height="600"></canvas>
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
+    </div>
 
     <script src="app.js"></script>
 </body>

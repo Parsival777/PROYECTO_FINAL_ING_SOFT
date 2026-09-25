@@ -44,6 +44,7 @@ function showScreen(id) {
     screens.forEach(s => document.getElementById(s).classList.remove("active"));
     canvas.style.display = "none";
     document.getElementById("hud").style.display = "none";
+    document.getElementById("game-wrapper").style.display = "none";
     if(id) document.getElementById(id).classList.add("active");
 }
 
@@ -375,6 +376,7 @@ function initEnemies() {
 
 function startGame() {
     showScreen(null);
+    document.getElementById("game-wrapper").style.display = "flex";
     canvas.style.display = "block";
     document.getElementById("hud").style.display = "flex";
 
@@ -482,6 +484,7 @@ async function endGame() {
     showScreen("gameover-screen");
     canvas.style.display = "none";
     document.getElementById("hud").style.display = "none";
+    document.getElementById("game-wrapper").style.display = "none";
     
     const scoreEl = document.getElementById("go-score");
     if(scoreEl) scoreEl.innerText = `Puntuación: ${score}`;
